@@ -10,7 +10,7 @@ Game name (up for serious debate):
 
 Legend:
   - ¿sentence? -> means just a thought. Most of the times, it refers to potential game features 
-  - # sentence -> means a new idea/concept not present in the original antiyoy. Usually it refers to changed gameplay features. 
+  - ! sentence -> means a new idea/concept not present in the original antiyoy. Usually it refers to changed gameplay features. 
 
 Premise:
   - A turn-based strategy game on a hexagonal grid where players (¿and/or bots?) fight for control of the map. 
@@ -27,8 +27,8 @@ Premise:
   - Only units are allowed to be moved. 
   - An entity of only one hex is not considered an entity, thus it will produce nothing, but it will remain controlled by the owner of the original entity. 
   - Each hex can only be occupied by one structure or one unit at any time. 
-  - # Rivers in between two hexes may not be crosses by any unit. 
-  - # Towers and units can defend adjacent hexes even separated by rivers. 
+  - ! Rivers in between two hexes may not be crosses by any unit. 
+  - ! Towers and units can defend adjacent hexes even separated by rivers. 
   - Fog of war restricts players from visualising the entire map at once. To gain vision, a player must use units or towers to detect nearby tiles. 
 
 Expected Gameplay Features:
@@ -43,12 +43,12 @@ Potential Gameplay Features:
   - In-game diplomacy: Firendship, enemy, neutal states, land transfer, money transfer, income subsidies, ¿military acces?, ¿mercenaries?. 
   - Online multiplayer, with automatic map transfer
   vvv less likely from here vvv
-  - # More complicated hex terrain: fertile land (2x income), forest (less visibility/movement), mountain (+1 defense, less movement, more visibility, invalid for structures) etc. (up for serious debate) 
+  - ! More complicated hex terrain: fertile land (2x income), forest (less visibility/movement), mountain (+1 defense, less movement, more visibility, invalid for structures) etc. (up for serious debate) 
 (goes hand in hand with next point). 
-  - # More structures: ballista (+1 attack for nearby units), monastery (+1 defense for nearby units) etc. (up for serious debate) (goes hand in hand with previous point).
+  - ! More structures: ballista (+1 attack for nearby units), monastery (+1 defense for nearby units) etc. (up for serious debate) (goes hand in hand with previous point).
   - Bots
-  - # Naval warfare, naval supply, amphibious invasions, sea income. 
-  - # Replace lost player with bot, hotjoin.
+  - ! Naval warfare, naval supply, amphibious invasions, sea income. 
+  - ! Replace lost player with bot, hotjoin.
 
 Basic Game Code Ideas:
   -  Unit inheritance structure:
