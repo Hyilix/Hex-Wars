@@ -1,5 +1,6 @@
 from Hex import Hex
 
+# Default hex
 empty_hex = Hex(0, 0, -1)
 
 class HexMap:

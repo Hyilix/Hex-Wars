@@ -1,4 +1,5 @@
 from Hex import Hex
+from HexMap import HexMap
 
 class State:
     def __init__(self, owner : int, central_hex : Hex):
