@@ -6,6 +6,10 @@ class State:
         self.owner = owner
         self.central_hex = central_hex
 
+        # The hexes of the state
+        self.state_hexes = [central_hex]
+
+        # State economy
         self.income = 0
         self.money = 0
 
@@ -20,6 +24,10 @@ class State:
 
     def set_central_hex(self, central_hex : Hex):
         self.central_hex = central_hex
+
+    # Get the hexes of a state starting from the central hex
+    def hex_march(self):
+        pass
 
     # TODO: class methods for splitting, merging states
     # TODO: class methods for getting the hexes of states, adding/removing hexes from states

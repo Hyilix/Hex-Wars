@@ -1,4 +1,5 @@
 from Hex import Hex
+from Hex import Unit
 
 # Default hex
 empty_hex = Hex(0, 0, -1)
@@ -11,3 +12,4 @@ class HexMap:
     def get_hex_from_pos(self, x_pos : int, y_pos : int):
         return self.hexmap[y_pos][x_pos]
 
+    # TODO: add unit movement (or get the hexes that a unit can move to)
