@@ -1,8 +1,11 @@
 import pygame
+from pygame.locals import *
+import Doodads
 import sys
 pygame.init()
 
-screen = pygame.display.set_mode((800, 600))
+screen = pygame.display.set_mode((800, 600), RESIZABLE)
+
 pygame.display.set_caption("Hex game")
 clock = pygame.time.Clock() 
 font = pygame.font.SysFont(None, 25)
