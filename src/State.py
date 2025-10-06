@@ -6,6 +6,9 @@ class State:
         self.owner = owner
         self.central_hex = central_hex
 
+        self.income = 0
+        self.money = 0
+
     def get_owner(self):
         return self.owner
 
@@ -18,3 +21,5 @@ class State:
     def set_central_hex(self, central_hex : Hex):
         self.central_hex = central_hex
 
+    # TODO: class methods for splitting, merging states
+    # TODO: class methods for getting the hexes of states, adding/removing hexes from states

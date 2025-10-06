@@ -11,6 +11,7 @@ class Hex:
         # The doodad contained inside the Hex
         self.doodad = None
 
+        # The hex that will contain the town center (the central hex of a state)
         self.is_central_hex = False
 
     def set_river(self, index : int, is_river : bool):

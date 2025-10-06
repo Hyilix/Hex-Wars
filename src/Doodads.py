@@ -3,6 +3,12 @@ class Doodad:
     def __init__(self, income : int):
         self.income = income
 
+# Owner convention:
+#  -1 ->  tile not existing
+#   0 ->  tile neutral
+# 1-8 ->  tile controlled by player 1-8
+# The number of max players is not yet defined, 8 is taken as just an example
+
 class Controllable(Doodad):
     def __init__(self, owner : int, income : int):
         super().__init__(income)
