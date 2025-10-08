@@ -1,12 +1,19 @@
 from Hex import Hex
 
-# Default hex
-empty_hex = Hex(0, 0, -1)
-
 class HexMap:
     def __init__(self, x_tile_count : int, y_tile_count : int):
         self.dimensions = (x_tile_count, y_tile_count)
-        self.hexmap = [[empty_hex] * x_tile_count] * y_tile_count
+        self.hexmap = [[]]
+        self.fill_map()
+
+    def change_map_size(self, x_count_new : int, y_count_new : int):
+        self.dimensions = (x_count_new, y_count_new)
+
+    def fill_map(self):
+        for y in range(self.dimensions[1]):
+            for x in range(self.dimensions[0]):
+                self.hexmap[y].append(Hex(x, y, -1))
+            self.hexmap.append([])
 
     def get_hex_from_pos(self, x_pos : int, y_pos : int):
         # Out of bounds check
@@ -17,17 +24,9 @@ class HexMap:
     def get_hexmap(self):
         return self.hexmap
 
-    # Returns the position of a hex in the array
-    def get_pos_from_hex(self, tile : Hex):
-        for y in range(self.dimensions[1]):
-            for x in range(self.dimensions[0]):
-                if self.hexmap[y][x] == tile:
-                    return (x, y)
-        return (None, None)
-
     # Returns a neighbor of input index
     def get_hex_neighbor(self, tile : Hex, index : int):
-        (tile_pos_x, tile_pos_y) = self.get_pos_from_hex(tile)
+        (tile_pos_x, tile_pos_y) = tile.get_position()
         index = index % 6
 
         # Check if tile exists

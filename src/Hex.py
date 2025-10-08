@@ -1,5 +1,9 @@
 from Doodads import Doodad
 
+def reverse_neighbor_index(index : int):
+    index = index % 6
+    return (index + 3) % 6
+
 class Hex:
     def __init__(self, x_pos : int, y_pos : int, owner = -1):
         self.position = (x_pos, y_pos)
@@ -13,6 +17,12 @@ class Hex:
 
         # The hex that will contain the town center (the central hex of a state)
         self.is_central_hex = False
+
+    def get_position(self):
+        return self.position
+
+    def set_position(self, new_x : int, new_y : int):
+        self.position = (new_x, new_y)
 
     def set_river(self, index : int, is_river : bool):
         self.rivers[index % 6] = is_river

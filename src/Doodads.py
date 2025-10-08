@@ -3,6 +3,7 @@ class Doodad:
     def __init__(self, income : int):
         self.income = income
 
+# NOTE:
 # Owner convention:
 #  -1 ->  tile not existing
 #   0 ->  tile neutral
