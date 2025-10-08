@@ -34,6 +34,7 @@ class HexMap:
         if tile_pos_x == None or tile_pos_y == None:
             return None
 
+        # Check all indeces
         if index == 0:
             tile_pos_y -= 1
         elif index == 1:
