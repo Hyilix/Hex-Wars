@@ -3,6 +3,11 @@ import pygame
 import Hex
 import HexMap
 
+# TODO:
+# The method of creating a big surface for the map is inneficient
+# Look for other alternatives
+
+# General Renderer
 class Renderer:
     def __init__(self, textures_path : str, font_path : str = ""):
         self.textures_path = textures_path
@@ -28,7 +33,17 @@ class Renderer:
     def load_image_surface(self, path_to_image : str):
         return pygame.image.load(self.textures_path + path_to_image)
 
+# Renderer for the hexmap
 class MapRenderer(Renderer):
     def __init__(self, textures_path : str):
         super().__init__(textures_path)
+        self.map_surface = None
+        self.tile_surface = self.load_image_surface("HexMap.png")
+
+    # Create a new surface for the map
+    def create_surface(self, dimensions : tuple[int, int]):
+        self.map_surface = pygame.Surface(dimensions)
+
+    def add_tile(self, position = tuple[int, int]):
+        pass
 
