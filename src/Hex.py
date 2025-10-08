@@ -4,10 +4,15 @@ def reverse_neighbor_index(index : int):
     index = index % 6
     return (index + 3) % 6
 
+# TODO: add this to a yaml/json settings
+DEFAULT_HEX_INCOME = 1
+
 class Hex:
     def __init__(self, x_pos : int, y_pos : int, owner = -1):
         self.position = (x_pos, y_pos)
         self.owner = owner
+
+        self.income = DEFAULT_HEX_INCOME
 
         # An array representing the rivers
         self.rivers = [False] * 6
