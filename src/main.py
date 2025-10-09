@@ -60,7 +60,6 @@ while running:
     # 3. draw everything
     screen.fill((50, 50, 50))  # background color
     # draw_button()
-    renderer.draw_map(test_hex_map)
     pygame.display.flip()      # update display
 
     clock.tick(60)  # limit to 60 frames per second
