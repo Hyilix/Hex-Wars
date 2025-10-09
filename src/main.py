@@ -2,6 +2,11 @@ import pygame
 from pygame.locals import *
 import Doodads
 import sys
+
+import HexMap
+import GameRenderer
+import colors
+
 pygame.init()
 
 screen = pygame.display.set_mode((800, 600), RESIZABLE)
@@ -23,6 +28,15 @@ def draw_button():
     text_rect = text_surface.get_rect(center=quit_button1.center)
     screen.blit(text_surface, text_rect)
 
+# Create a GameRenderer
+color_scheme = [colors.gray_light, colors.red, colors.blue, colors.green, colors.yellow]
+renderer = GameRenderer.GameRenderer(screen, color_scheme)
+
+renderer.load_hex_surface()
+
+# Create and fill a map
+test_hex_map = HexMap.HexMap(10, 20, 2)
+print(test_hex_map.hexmap[0][0].owner)
 
 running = True
 while running:
@@ -46,7 +60,8 @@ while running:
 
     # 3. draw everything
     screen.fill((50, 50, 50))  # background color
-    draw_button()
+    # draw_button()
+    renderer.draw_map(test_hex_map)
     pygame.display.flip()      # update display
 
     clock.tick(60)  # limit to 60 frames per second

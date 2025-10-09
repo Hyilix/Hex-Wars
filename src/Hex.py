@@ -1,9 +1,5 @@
 from Doodads import Doodad
 
-def reverse_neighbor_index(index : int):
-    index = index % 6
-    return (index + 3) % 6
-
 # TODO: add this to a yaml/json settings
 DEFAULT_HEX_INCOME = 1
 
@@ -13,9 +9,6 @@ class Hex:
         self.owner = owner
 
         self.income = DEFAULT_HEX_INCOME
-
-        # An array representing the rivers
-        self.rivers = [False] * 6
 
         # The doodad contained inside the Hex
         self.doodad = None
@@ -28,15 +21,6 @@ class Hex:
 
     def set_position(self, new_x : int, new_y : int):
         self.position = (new_x, new_y)
-
-    def set_river(self, index : int, is_river : bool):
-        self.rivers[index % 6] = is_river
-
-    def get_rivers(self):
-        return self.rivers
-
-    def get_river_index(self, index : int):
-        return self.rivers[index % 6]
 
     def set_owner(self, owner : int):
         self.owner = owner

@@ -77,6 +77,7 @@ class State:
     # Remove a hex from the state_hexes
     def remove_hex(self, tile : Hex):
         self.state_hexes.remove(tile)
+        # TODO: check states for separation
 
     # TODO: class methods for splitting, merging states
     # TODO: class methods for getting the hexes of states, adding/removing hexes from states

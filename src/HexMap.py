@@ -1,18 +1,18 @@
 from Hex import Hex
 
 class HexMap:
-    def __init__(self, x_tile_count : int, y_tile_count : int):
+    def __init__(self, x_tile_count : int, y_tile_count : int, default_owner : int = -1):
         self.dimensions = (x_tile_count, y_tile_count)
         self.hexmap = [[]]
-        self.fill_map()
+        self.fill_map(default_owner)
 
     def change_map_size(self, x_count_new : int, y_count_new : int):
         self.dimensions = (x_count_new, y_count_new)
 
-    def fill_map(self):
+    def fill_map(self, default_owner : int = -1):
         for y in range(self.dimensions[1]):
             for x in range(self.dimensions[0]):
-                self.hexmap[y].append(Hex(x, y, -1))
+                self.hexmap[y].append(Hex(x, y, default_owner))
             self.hexmap.append([])
 
     def get_hex_from_pos(self, x_pos : int, y_pos : int):
