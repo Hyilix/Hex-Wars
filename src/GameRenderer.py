@@ -37,7 +37,7 @@ class HexChunk:
         self.chunk_size = DEFAULT_CHUNK_SIZE
         self.tile_size = tile_size
         self.surface_size = (tile_size[0] * self.chunk_size[0] * 3 // 4 + tile_size[0] // 4,
-                             tile_size[1] * self.chunk_size[1] * 3 // 4 + tile_size[1] // 4)
+                             tile_size[1] * self.chunk_size[1] + tile_size[1] // 2)
         self.start_position = (start_position[0] * self.surface_size[0],
                                start_position[1] * self.surface_size[1])
 
@@ -97,10 +97,13 @@ class GameRenderer:
         if map_dimensions[1] % self.chunk_size[1]:
             chunks_y += 1
 
+        print("chunks:", chunks_x, chunks_y)
+
         # Create the chunks
         for y in range(chunks_y):
+            self.chunks.append([])
             for x in range(chunks_x):
-                self.chunks[y][x] = HexChunk(self.hex_surface_basic_size, (x, y))
+                self.chunks[y].append(HexChunk(self.hex_surface_basic_size, (x, y)))
 
     # Search in cache
     def find_hex_by_color(self, color : tuple[int, int, int]):
@@ -156,18 +159,28 @@ class GameRenderer:
         chunk_surf.blit(temp_hex_surface, (tile_x, tile_y))
 
     # Generate all the chunks from the map
-    def draw_chunks(self, hexmap : HexMap.HexMap):
+    def load_chunks(self, hexmap : HexMap.HexMap):
         if not hexmap:
             return
 
         map_size = hexmap.dimensions
+        print(map_size)
 
         for y in range(map_size[1]):
             for x in range(map_size[0]):
                 tile = hexmap.get_hexmap()[y][x]
                 color = self.color_scheme[tile.owner]
-
-                chunk_surface = self.chunks[y % 4][x % 4].chunk_surface
-
+                chunk_surface = self.chunks[y // self.chunk_size[1]][x // self.chunk_size[0]].chunk_surface
                 self.draw_tile(tile, color, chunk_surface)
+
+    def update_chunk(self, tile : Hex.Hex):
+        (x_tile, y_tile) = tile.position
+        chunk_surface = self.chunks[y_tile // self.chunk_size[1]][x_tile // self.chunk_size[0]].chunk_surface
+        color = self.color_scheme[tile.owner]
+        self.draw_tile(tile, color, chunk_surface)
+
+    def draw_chunks(self):
+        for y in range(len(self.chunks)):
+            for x in range(len(self.chunks[y])):
+                self.screen.blit(self.chunks[y][x].chunk_surface, (x * 150, y * 150))
 
