@@ -89,7 +89,7 @@ class GameRenderer:
         self.background_surface = pygame.Surface
 
     # Load new hex surface
-    def load_hex_surface(self, scale : int = 1, img_name : str = "HexTile.png"):
+    def load_hex_surface(self, scale : float = 1, img_name : str = "HexTile.png"):
         self.hex_surface = pygame.image.load(self.texture_path + img_name)
         self.hex_surface_basic_size = self.hex_surface.get_size()
         self.hex_surface_scale = scale
@@ -194,7 +194,7 @@ class GameRenderer:
 
         for y in range(len(self.chunks)):
             for x in range(len(self.chunks[y])):
-                self.chunks[0][0].scale_surface(self.hex_surface_scale)
+                self.chunks[y][x].scale_surface(self.hex_surface_scale)
 
     # Update a chunk from a changed tile
     def update_chunk(self, tile : Hex.Hex):
