@@ -41,6 +41,10 @@ class Farm(Structure):
         super().__init__(owner, income = 6, sight_range = 1, defence = 0)
         self.name = name
 
+class Tree(Structure):
+    def __init__(self, owner):
+        super().__init__(owner, income = -1, sight_range = 0, defence = 0)
+
 """ Default Units """
 class UnitTier1(Unit):
     def __init__(self, owner):

@@ -4,7 +4,8 @@ import Doodads
 import sys
 from button import *
 from colors import *
-
+import math
+import random
 
 # Simple unit test
 UnitTest = Doodads.UnitTier3(1)
@@ -39,7 +40,33 @@ elite = Button(430, 10)
 #     text_surface = font.render('Quit', True, (255, 255, 255))
 #     text_rect = text_surface.get_rect(center=quit_button1.center)
 #     screen.blit(text_surface, text_rect)
+HEX_COLOR = (100, 200, 150)
+hex_radius = 40
+hex_height = math.sqrt(3) * hex_radius
+hex_width = 2.1 * hex_radius
 
+def draw_hexagon(surface, color, position):
+    x, y = position
+    points = []
+    for i in range(6):
+        angle_deg = 60 * i
+        angle_rad = math.radians(angle_deg)
+        px = x + hex_radius * math.cos(angle_rad)
+        py = y + hex_radius * math.sin(angle_rad)
+        points.append((px, py))
+    pygame.draw.polygon(surface, color, points, 2)
+
+holes = {(1, 2), (3, 4), (4, 1)}
+
+def draw_hex_grid(rows, cols):
+    for row in range(rows):
+        for col in range(cols):
+            if (row, col) in holes:
+            # if random.random() < 0.1:
+                continue
+            x = col * hex_width * 3/4 + 100
+            y = row * hex_height + (col % 2) * (hex_height / 2) + 100
+            draw_hexagon(screen, HEX_COLOR, (x, y))
 
 running = True
 while running:
@@ -53,7 +80,7 @@ while running:
                   sys.exit()
     # 2. update game logic
     # (e.g. move player, check collisions)
-
+    
     if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
                 mouse_pos = event.pos
@@ -63,7 +90,7 @@ while running:
 
     # 3. draw everything
     screen.fill((50, 50, 50))  # background color
-    quit_but.draw(screen, font, white, red, white, "quit")
+    quit_but.draw(screen, font, white, red, white, "QUIT")
     t1.draw(screen,font, white, blue, white, "Tower1")
     t2.draw(screen,font, white, blue, white, "Tower2")
     farm.draw(screen,font, white, blue, white, "Farm")
@@ -71,6 +98,7 @@ while running:
     spear.draw(screen,font, white, blue, white, "Spear")
     knight.draw(screen,font, white, blue, white, "Knight")
     elite.draw(screen,font, white, blue, white, "Elite")
+    draw_hex_grid(5, 7)
     pygame.display.flip()      # update display
 
     clock.tick(60)  # limit to 60 frames per second

@@ -1,54 +1,66 @@
 import pygame
-from pygame.locals import *
-import Doodads
-import sys
+import math
+
 pygame.init()
+screen = pygame.display.set_mode((800, 600))
+clock = pygame.time.Clock()
 
-screen = pygame.display.set_mode((800, 600), RESIZABLE)
+def hexagon_points(center, radius):
+    x, y = center
+    return [(x + radius * math.cos(math.pi/3 * i),
+             y + radius * math.sin(math.pi/3 * i))
+            for i in range(6)]
 
-pygame.display.set_caption("Hex game")
-clock = pygame.time.Clock() 
-font = pygame.font.SysFont(None, 25)
+def point_in_hexagon(point, hex_points):
+    x, y = point
+    n = len(hex_points)
+    inside = False
+    px, py = hex_points[0]
+    for i in range(n+1):
+        qx, qy = hex_points[i % n]
+        if ((qy > y) != (py > y)) and (x < (px - qx) * (y - qy) / (py - qy) + qx):
+            inside = not inside
+        px, py = qx, qy
+    return inside
 
-quit_button1 = pygame.Rect(10, 10, 50, 25)
-quit_button2 = pygame.Rect(12, 12, 46, 21)
-quit_button3 = pygame.Rect(10, 10, 50, 25)
+def generate_hex_centers(rows, cols, start_x=100, start_y=100, radius=30):
+    centers = []
+    hex_height = math.sqrt(3) * radius
+    hex_width = 2 * radius
+    horiz_spacing = 3/4 * hex_width
+    vert_spacing = hex_height
+    for row in range(rows):
+        for col in range(cols):
+            x = start_x + col * horiz_spacing
+            y = start_y + row * vert_spacing + (col % 2) * (hex_height / 2)
+            centers.append((x, y))
+    return centers
 
+# === BOARD SETUP ===
+radius = 30
+centers = generate_hex_centers(5, 6, 100, 100, radius)
+hex_colors = [(80, 80, 120) for _ in centers]
 
-def draw_button():
-    pygame.draw.rect(screen, (200, 200, 200), quit_button1)
-    pygame.draw.rect(screen, (0, 0, 0), quit_button2)
-    # pygame.draw.rect(screen, (0, 128, 255), quit_button)
-    text_surface = font.render('Quit', True, (255, 255, 255))
-    text_rect = text_surface.get_rect(center=quit_button1.center)
-    screen.blit(text_surface, text_rect)
-
-
+# === MAIN LOOP ===
 running = True
 while running:
-    # 1. handle events
+    screen.fill((25, 25, 35))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
-             if quit_button1.collidepoint(event.pos):
-                  pygame.quit()
-                  sys.exit()
-    # 2. update game logic
-    # (e.g. move player, check collisions)
+            for i, c in enumerate(centers):
+                if point_in_hexagon(event.pos, hexagon_points(c, radius)):
+                    print(f"Clicked hex {i}")
+                    hex_colors[i] = (200, 80, 80)
 
-    if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  # Left mouse button
-                mouse_pos = event.pos
-                print(f"Mouse clicked at: {mouse_pos}")
-                if quit_button1.collidepoint(event.pos):
-                    print("Button clicked!")
+    # Draw the grid
+    for i, c in enumerate(centers):
+        pygame.draw.polygon(screen, hex_colors[i], hexagon_points(c, radius))
+        pygame.draw.polygon(screen, (0, 0, 0), hexagon_points(c, radius), 2)
 
-    # 3. draw everything
-    screen.fill((50, 50, 50))  # background color
-    draw_button()
-    pygame.display.flip()      # update display
-
-    clock.tick(60)  # limit to 60 frames per second
+    pygame.display.flip()
+    clock.tick(60)
 
 pygame.quit()
