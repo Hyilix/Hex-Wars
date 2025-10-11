@@ -9,7 +9,7 @@ import Player
 import colors
 
 # The default chunk size in tiles. It is intended for the first value to be even
-DEFAULT_CHUNK_SIZE = (4, 4)
+DEFAULT_CHUNK_SIZE = (6, 6)
 
 class HexCacheUnit:
     def __init__(self, color : tuple[int, int, int], surface : pygame.Surface):
@@ -41,7 +41,7 @@ class HexChunk:
         self.start_position = (start_position[0] * self.surface_size[0],
                                start_position[1] * self.surface_size[1])
 
-        self.chunk_surface : pygame.Surface = pygame.Surface(self.surface_size)
+        self.chunk_surface : pygame.Surface = pygame.Surface(self.surface_size, pygame.SRCALPHA)
         self.chunk_scale = 1
 
     # Scale surface to preferred scale
@@ -148,9 +148,11 @@ class GameRenderer:
         tile_x %= self.chunk_size[0]
         tile_y %= self.chunk_size[1]
 
+        tile_offset_x = tile_x
+
         tile_y *= hex_size[1]
         tile_x *= hex_size[0]
-        tile_x -= hex_size[0] * tile.position[0] // 4
+        tile_x -= hex_size[0] * tile_offset_x // 4
 
         # Lower the hexagons on the odd positions
         if tile.position[0] % 2 == 1:
@@ -180,7 +182,14 @@ class GameRenderer:
         self.draw_tile(tile, color, chunk_surface)
 
     def draw_chunks(self):
+        if not self.chunks[0][0]:
+            return
+
+        chunk_size : tuple[int, int] = self.chunks[0][0].chunk_surface.get_size()
+
         for y in range(len(self.chunks)):
             for x in range(len(self.chunks[y])):
-                self.screen.blit(self.chunks[y][x].chunk_surface, (x * 150, y * 150))
+                x_chunk_pos = x * chunk_size[0] - (x * self.hex_surface_basic_size[0] // 4)
+                y_chunk_pos = y * chunk_size[1] - (y * self.hex_surface_basic_size[1] // 2)
+                self.screen.blit(self.chunks[y][x].chunk_surface, (x_chunk_pos, y_chunk_pos))
 
