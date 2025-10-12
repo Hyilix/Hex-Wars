@@ -7,9 +7,13 @@ import State
 import Player
 
 import colors
+from utils import clamp
 
 # The default chunk size in tiles. It is intended for the first value to be even
 DEFAULT_CHUNK_SIZE = (16, 16)
+
+# TODO: Lazy chunk generation, generate chunks on demand and leave them in Cache
+# TODO: Cache chunks at preset zoom levels, and clear cache when new zoom level entered
 
 class HexCacheUnit:
     def __init__(self, color : tuple[int, int, int], surface : pygame.Surface):
@@ -65,7 +69,7 @@ class HexChunk:
         self.scale_surface(self.chunk_scale)
 
 class GameRenderer:
-    def __init__(self, screen, color_scheme, zoom_settings : tuple[float, float, float] = (0.5, 4, 0.1), texture_path : str = "../assets/textures/"):
+    def __init__(self, screen, color_scheme, zoom_settings : tuple[float, float, float] = (0.2, 6, 0.1), texture_path : str = "../assets/textures/"):
         self.chunk_size = DEFAULT_CHUNK_SIZE
 
         # Zoom settings (min_scale, max_scale, scale_step)
@@ -105,6 +109,7 @@ class GameRenderer:
         self.background_surface = pygame.image.load(self.texture_path + img_name)
 
     def set_zoom(self, new_zoom : float):
+        new_zoom = clamp(new_zoom, self.zoom_settings[0], self.zoom_settings[1])
         for y in range(len(self.chunks)):
             for x in range(len(self.chunks[y])):
                 self.chunks[y][x].scale_surface(new_zoom);

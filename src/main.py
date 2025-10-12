@@ -35,7 +35,7 @@ renderer = GameRenderer.GameRenderer(screen, color_scheme)
 renderer.load_hex_surface(2)
 
 # Create and fill a map
-test_hex_map = HexMap.HexMap(20, 10, 0)
+test_hex_map = HexMap.HexMap(100, 100, 0)
 renderer.init_chunks(test_hex_map.dimensions)
 renderer.load_chunks(test_hex_map)
 
