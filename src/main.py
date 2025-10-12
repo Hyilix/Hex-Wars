@@ -32,7 +32,7 @@ def draw_button():
 color_scheme = [colors.gray_light, colors.red, colors.blue, colors.green, colors.yellow]
 renderer = GameRenderer.GameRenderer(screen, color_scheme)
 
-renderer.load_hex_surface(3)
+renderer.load_hex_surface(2)
 
 # Create and fill a map
 test_hex_map = HexMap.HexMap(20, 10, 0)
