@@ -46,6 +46,9 @@ class GameRenderer:
         # Colored Hexes Cache
         self.hex_cache : list[HexCacheUnit] = []
 
+        # Doodads Cache
+        self.doodad_cache = {} # Key: (doodad_type, zoom)
+
         # Background Info
         self.background_surface = pygame.Surface
 
@@ -96,21 +99,24 @@ class GameRenderer:
         if not temp_hex_surface:
             temp_hex_surface = self.add_hex_color(new_color)
 
+        temp_hex_surface = pygame.transform.scale_by(temp_hex_surface, self.hex_surface_scale)
+
         # Render the hex on the chunk surface
         # Calculate the position of the hex before rendering
         hex_size = self.hex_surface_basic_size
+        hex_zoom = self.hex_surface_scale
 
         (tile_x, tile_y) = tile.position
 
         tile_offset_x = tile_x
 
-        tile_y *= hex_size[1]
-        tile_x *= hex_size[0]
-        tile_x -= hex_size[0] * tile_offset_x // 4
+        tile_y *= hex_size[1] * hex_zoom
+        tile_x *= hex_size[0] * hex_zoom
+        tile_x -= hex_size[0] * tile_offset_x * hex_zoom // 4
 
         # Lower the hexagons on the odd positions
         if tile.position[0] % 2 == 1:
-            tile_y += hex_size[1] // 2
+            tile_y += hex_size[1] * hex_zoom // 2
 
         self.screen.blit(temp_hex_surface, (tile_x, tile_y))
 
