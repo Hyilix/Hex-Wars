@@ -52,6 +52,9 @@ while running:
     # 2. update game logic
     # (e.g. move player, check collisions)
 
+        elif event.type == pygame.MOUSEWHEEL:
+            renderer.set_zoom(round(event.y, 1) * renderer.zoom_settings[2] + renderer.current_zoom)
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
                 mouse_pos = event.pos

@@ -9,7 +9,7 @@ import Player
 import colors
 
 # The default chunk size in tiles. It is intended for the first value to be even
-DEFAULT_CHUNK_SIZE = (6, 6)
+DEFAULT_CHUNK_SIZE = (16, 16)
 
 class HexCacheUnit:
     def __init__(self, color : tuple[int, int, int], surface : pygame.Surface):
@@ -47,6 +47,7 @@ class HexChunk:
 
     # Scale surface to preferred scale
     def scale_surface(self, scale : float):
+        del self.scaled_chunk_surface
         self.scaled_chunk_surface = pygame.transform.scale_by(self.chunk_surface, scale)
         self.chunk_scale = scale
 
@@ -79,6 +80,8 @@ class GameRenderer:
         self.hex_surface_basic_size = (0, 0)
         self.hex_surface_scale = 1
 
+        self.current_zoom = 1
+
         # Colored Hexes Cache
         self.hex_cache : list[HexCacheUnit] = []
 
@@ -100,6 +103,13 @@ class GameRenderer:
     # Load new background surface
     def load_background_surface(self, scale : int = 1, img_name : str = "Background.png"):
         self.background_surface = pygame.image.load(self.texture_path + img_name)
+
+    def set_zoom(self, new_zoom : float):
+        for y in range(len(self.chunks)):
+            for x in range(len(self.chunks[y])):
+                self.chunks[y][x].scale_surface(new_zoom);
+
+        self.current_zoom = new_zoom
 
     # Initialise all chunks into memory
     def init_chunks(self, map_dimensions : tuple[int, int]):
