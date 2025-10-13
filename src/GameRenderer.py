@@ -206,7 +206,7 @@ class GameRenderer:
 
         for y in range(len(self.chunks)):
             for x in range(len(self.chunks[y])):
-                self.chunks[y][x].scale_surface(self.hex_surface_scale)
+                self.chunks[y][x].scale_surface(self.current_zoom)
 
     # Update a chunk from a changed tile
     def update_chunk(self, tile : Hex.Hex):
@@ -225,7 +225,7 @@ class GameRenderer:
         for y in range(len(self.chunks)):
             for x in range(len(self.chunks[y])):
                 # Get the position for the next chunk
-                x_chunk_pos = x * chunk_size[0] * self.current_zoom - (x * self.hex_surface_basic_size[0] * self.hex_surface_scale // 4)
-                y_chunk_pos = y * chunk_size[1] * self.current_zoom - (y * self.hex_surface_basic_size[1] * self.hex_surface_scale // 2)
+                x_chunk_pos = x * chunk_size[0] * self.current_zoom - (x * self.hex_surface_basic_size[0] * self.current_zoom // 4)
+                y_chunk_pos = y * chunk_size[1] * self.current_zoom - (y * self.hex_surface_basic_size[1] * self.current_zoom // 2)
                 self.screen.blit(pygame.transform.scale_by(self.chunks[y][x].chunk_surface, self.current_zoom), (x_chunk_pos, y_chunk_pos))
 
