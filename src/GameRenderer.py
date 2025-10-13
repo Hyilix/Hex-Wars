@@ -10,12 +10,26 @@ import colors
 from utils import clamp
 
 # The default chunk size in tiles. It is intended for the first value to be even
-DEFAULT_CHUNK_SIZE = (16, 16)
+DEFAULT_CHUNK_SIZE = (8, 8)
 
 CHUNK_ZOOM_CACHE = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
 
 # TODO: Lazy chunk generation, generate chunks on demand and leave them in Cache
 # TODO: Cache chunks at preset zoom levels, and clear cache when new zoom level entered
+
+class Camera:
+    def __init__(self, size : tuple[int, int], position : tuple[int, int], boundaries : tuple[int, int]):
+        self.position = position
+        self.size = size
+        self.camera_boundaries = boundaries
+
+    # Change the size of the camera
+    def zoom_size(self, zoom : float):
+        pass
+
+    # Change the camera position
+    def change_position(self, direction : tuple[int, int]):
+        pass
 
 class HexCacheUnit:
     def __init__(self, color : tuple[int, int, int], surface : pygame.Surface):
