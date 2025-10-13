@@ -12,6 +12,8 @@ from utils import clamp
 # The default chunk size in tiles. It is intended for the first value to be even
 DEFAULT_CHUNK_SIZE = (16, 16)
 
+CHUNK_ZOOM_CACHE = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
+
 # TODO: Lazy chunk generation, generate chunks on demand and leave them in Cache
 # TODO: Cache chunks at preset zoom levels, and clear cache when new zoom level entered
 
@@ -46,27 +48,21 @@ class HexChunk:
                                start_position[1] * self.surface_size[1])
 
         self.chunk_surface : pygame.Surface = pygame.Surface(self.surface_size, pygame.SRCALPHA)
-        self.scaled_chunk_surface : pygame.Surface = self.chunk_surface.copy()
         self.chunk_scale = 1
 
     # Scale surface to preferred scale
     def scale_surface(self, scale : float):
-        del self.scaled_chunk_surface
-        self.scaled_chunk_surface = pygame.transform.scale_by(self.chunk_surface, scale)
+        # del self.scaled_chunk_surface
+        # self.scaled_chunk_surface = pygame.transform.scale_by(self.chunk_surface, scale)
+
+        new_size = (self.surface_size[0] * scale, self.surface_size[1] * scale)
+
+        self.chunk_surface = pygame.transform.scale(self.chunk_surface, new_size)
         self.chunk_scale = scale
 
     # Scale surface to original size
     def scale_to_original(self):
         self.scale_surface(1 / self.chunk_scale)
-
-    def delete_scaled_surface(self):
-        if self.scaled_chunk_surface:
-            del self.scaled_chunk_surface
-
-    def create_scaled_surface(self):
-        self.delete_scaled_surface()
-        self.scaled_chunk_surface = self.chunk_surface.copy()
-        self.scale_surface(self.chunk_scale)
 
 class GameRenderer:
     def __init__(self, screen, color_scheme, zoom_settings : tuple[float, float, float] = (0.2, 6, 0.1), texture_path : str = "../assets/textures/"):
@@ -112,7 +108,8 @@ class GameRenderer:
         new_zoom = clamp(new_zoom, self.zoom_settings[0], self.zoom_settings[1])
         for y in range(len(self.chunks)):
             for x in range(len(self.chunks[y])):
-                self.chunks[y][x].scale_surface(new_zoom);
+                # self.chunks[y][x].scale_surface(new_zoom);
+                pass
 
         self.current_zoom = new_zoom
 
@@ -223,12 +220,12 @@ class GameRenderer:
         if not self.chunks[0][0]:
             return
 
-        chunk_size : tuple[int, int] = self.chunks[0][0].scaled_chunk_surface.get_size()
+        chunk_size : tuple[int, int] = self.chunks[0][0].surface_size
 
         for y in range(len(self.chunks)):
             for x in range(len(self.chunks[y])):
                 # Get the position for the next chunk
-                x_chunk_pos = x * chunk_size[0] - (x * self.hex_surface_basic_size[0] * self.hex_surface_scale // 4)
-                y_chunk_pos = y * chunk_size[1] - (y * self.hex_surface_basic_size[1] * self.hex_surface_scale // 2)
-                self.screen.blit(self.chunks[y][x].scaled_chunk_surface, (x_chunk_pos, y_chunk_pos))
+                x_chunk_pos = x * chunk_size[0] * self.current_zoom - (x * self.hex_surface_basic_size[0] * self.hex_surface_scale // 4)
+                y_chunk_pos = y * chunk_size[1] * self.current_zoom - (y * self.hex_surface_basic_size[1] * self.hex_surface_scale // 2)
+                self.screen.blit(pygame.transform.scale_by(self.chunks[y][x].chunk_surface, self.current_zoom), (x_chunk_pos, y_chunk_pos))
 
