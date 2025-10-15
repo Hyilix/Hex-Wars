@@ -23,7 +23,7 @@ CHUNK_ZOOM_CACHE = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
 
 class Camera:
     def __init__(self, size : tuple[int, int], position : tuple[int, int], zoom : int):
-        self.position = position
+        self.position : tuple[int, int] = position
         self.size = size
         # self.camera_boundaries = boundaries
         self.zoom = zoom
@@ -32,7 +32,8 @@ class Camera:
 
     # Change the size of the camera
     def set_zoom_size(self, zoom : float):
-        self.size = (self.size[0] * zoom, self.size[1] * zoom)
+        self.position = (int(self.position[0] * zoom // self.zoom), int(self.position[1] * zoom // self.zoom))
+        self.zoom = zoom
 
     def set_position(self, position : tuple[int, int]):
         self.position = position
@@ -144,7 +145,7 @@ class GameRenderer:
                 pass
 
         self.current_zoom = new_zoom
-        # self.camera.set_zoom_size(new_zoom)
+        self.camera.set_zoom_size(new_zoom)
 
     # Initialise all chunks into memory
     def init_chunks(self, map_dimensions : tuple[int, int]):
