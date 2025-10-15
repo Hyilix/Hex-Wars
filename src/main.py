@@ -3,13 +3,16 @@ from pygame.locals import *
 import Doodads
 import sys
 
+from collections import deque
+
 import HexMap
 import GameRenderer
 import colors
 
 pygame.init()
 
-screen = pygame.display.set_mode((800, 600), RESIZABLE)
+screen_size = (2000, 1000)
+screen = pygame.display.set_mode(screen_size)
 
 pygame.display.set_caption("Hex game")
 clock = pygame.time.Clock() 
@@ -28,11 +31,15 @@ def draw_button():
     text_rect = text_surface.get_rect(center=quit_button1.center)
     screen.blit(text_surface, text_rect)
 
+# Create a Camera
+# Note, use the window size as camera default
+camera_test = GameRenderer.Camera(screen_size, (0, 0), 1)
+
 # Create a GameRenderer
 color_scheme = [colors.gray_light, colors.red, colors.blue, colors.green, colors.yellow]
-renderer = GameRenderer.GameRenderer(screen, color_scheme)
+renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
 
-renderer.load_hex_surface(2)
+renderer.load_hex_surface(1)
 
 # Create and fill a map
 test_hex_map = HexMap.HexMap(100, 100, 0)
@@ -43,13 +50,32 @@ running = True
 while running:
     # 1. handle events
     for event in pygame.event.get():
+        if event.type == pygame.MOUSEMOTION:
+            new_coord = pygame.mouse.get_pos()
+
+            # Pan the camera
+            if camera_test.panning_mode == True:
+                win_size = pygame.display.get_window_size()
+                (x_dir, y_dir) = (new_coord[0] - camera_test.pan_pivot[0], new_coord[1] - camera_test.pan_pivot[1])
+                camera_test.add_direction((x_dir, y_dir))
+                print((x_dir, y_dir), new_coord)
+
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
-             if quit_button1.collidepoint(event.pos):
-                  pygame.quit()
-                  sys.exit()
-    # 2. update game logic
+            if quit_button1.collidepoint(event.pos):
+                pygame.quit()
+                sys.exit()
+            # Camera panning on R_CLICK
+            if event.button == 3:
+                print("pan")
+                camera_test.pan_pivot = pygame.mouse.get_pos()
+                camera_test.panning_mode = True
+        elif event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 3:
+                print("unpan")
+                camera_test.panning_mode = False
+    #2. update game logic
     # (e.g. move player, check collisions)
 
         elif event.type == pygame.MOUSEWHEEL:

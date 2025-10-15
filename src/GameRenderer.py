@@ -9,27 +9,42 @@ import Player
 import colors
 from utils import clamp
 
+# Default texture path
+DEFAULT_TEXTURE_PATH : str = "../assets/textures/"
+
 # The default chunk size in tiles. It is intended for the first value to be even
 DEFAULT_CHUNK_SIZE = (8, 8)
 
+# The zoom values to cache chunk resize
 CHUNK_ZOOM_CACHE = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0]
 
 # TODO: Lazy chunk generation, generate chunks on demand and leave them in Cache
 # TODO: Cache chunks at preset zoom levels, and clear cache when new zoom level entered
 
 class Camera:
-    def __init__(self, size : tuple[int, int], position : tuple[int, int], boundaries : tuple[int, int]):
+    def __init__(self, size : tuple[int, int], position : tuple[int, int], zoom : int):
         self.position = position
         self.size = size
-        self.camera_boundaries = boundaries
+        # self.camera_boundaries = boundaries
+        self.zoom = zoom
+        self.panning_mode = False
+        self.pan_pivot : tuple[int, int] = (0, 0)
 
     # Change the size of the camera
-    def zoom_size(self, zoom : float):
-        pass
+    def set_zoom_size(self, zoom : float):
+        self.size = (self.size[0] * zoom, self.size[1] * zoom)
+
+    def set_position(self, position : tuple[int, int]):
+        self.position = position
+
+    def get_corner_position(self):
+        return (self.position[0] - self.size[0] // 2, self.position[1] - self.size[1] // 2)
 
     # Change the camera position
-    def change_position(self, direction : tuple[int, int]):
-        pass
+    def add_direction(self, direction : tuple[int, int]):
+        (x_pos, y_pos) = self.position
+        self.set_position((x_pos - direction[0], y_pos - direction[1]))
+        self.pan_pivot = (self.pan_pivot[0] + direction[0], self.pan_pivot[1] + direction[1])
 
 class HexCacheUnit:
     def __init__(self, color : tuple[int, int, int], surface : pygame.Surface):
@@ -79,15 +94,18 @@ class HexChunk:
         self.scale_surface(1 / self.chunk_scale)
 
 class GameRenderer:
-    def __init__(self, screen, color_scheme, zoom_settings : tuple[float, float, float] = (0.2, 6, 0.1), texture_path : str = "../assets/textures/"):
+    def __init__(self, screen, camera : Camera, color_scheme, zoom_settings : tuple[float, float, float] = (0.2, 6, 0.1)): 
         self.chunk_size = DEFAULT_CHUNK_SIZE
+
+        # Renderer Camera
+        self.camera = camera
 
         # Zoom settings (min_scale, max_scale, scale_step)
         self.zoom_settings = zoom_settings
 
         self.screen = screen
         self.color_scheme = color_scheme
-        self.texture_path = texture_path
+        self.texture_path = DEFAULT_TEXTURE_PATH
 
         # Hex Info
         self.hex_surface : pygame.Surface
@@ -126,6 +144,7 @@ class GameRenderer:
                 pass
 
         self.current_zoom = new_zoom
+        # self.camera.set_zoom_size(new_zoom)
 
     # Initialise all chunks into memory
     def init_chunks(self, map_dimensions : tuple[int, int]):
@@ -241,5 +260,10 @@ class GameRenderer:
                 # Get the position for the next chunk
                 x_chunk_pos = x * chunk_size[0] * self.current_zoom - (x * self.hex_surface_basic_size[0] * self.current_zoom // 4)
                 y_chunk_pos = y * chunk_size[1] * self.current_zoom - (y * self.hex_surface_basic_size[1] * self.current_zoom // 2)
+
+                # Apply camera offset
+                x_chunk_pos -= self.camera.get_corner_position()[0]
+                y_chunk_pos -= self.camera.get_corner_position()[1]
+
                 self.screen.blit(pygame.transform.scale_by(self.chunks[y][x].chunk_surface, self.current_zoom), (x_chunk_pos, y_chunk_pos))
 
