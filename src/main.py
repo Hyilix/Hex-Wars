@@ -44,7 +44,9 @@ renderer.load_hex_surface(1)
 # Create and fill a map
 test_hex_map = HexMap.HexMap(100, 100, 0)
 renderer.init_chunks(test_hex_map.dimensions)
+renderer.get_visible_chunks()
 renderer.load_chunks(test_hex_map)
+
 
 running = True
 while running:
@@ -58,7 +60,7 @@ while running:
                 win_size = pygame.display.get_window_size()
                 (x_dir, y_dir) = (new_coord[0] - camera_test.pan_pivot[0], new_coord[1] - camera_test.pan_pivot[1])
                 camera_test.add_direction((x_dir, y_dir))
-                print((x_dir, y_dir), new_coord)
+                renderer.get_visible_chunks()
 
         if event.type == pygame.QUIT:
             running = False
@@ -68,12 +70,10 @@ while running:
                 sys.exit()
             # Camera panning on R_CLICK
             if event.button == 3:
-                print("pan")
                 camera_test.pan_pivot = pygame.mouse.get_pos()
                 camera_test.panning_mode = True
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 3:
-                print("unpan")
                 camera_test.panning_mode = False
     #2. update game logic
     # (e.g. move player, check collisions)
