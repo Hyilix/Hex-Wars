@@ -316,7 +316,29 @@ class GameRenderer:
             print("DIFFERENT")
             print(f"{len(new_chunks)} x {len(new_chunks[0])}")
 
-            self.delete_chunks(self.visible_chunks)
+            # self.delete_chunks(self.visible_chunks)
+            # self.visible_chunks.clear()
+            # self.visible_chunks[: + len(new_chunks)] = new_chunks
+
+            # Delete the chunks no longer seen
+            del_chunks = []
+            for row in new_chunks:
+                for new_chunk in row:
+                    found_chunk = False;
+                    for y in range(len(self.visible_chunks)):
+                        if found_chunk == True:
+                            break
+                        for x in range(len(self.visible_chunks[y])):
+                            if new_chunk == self.visible_chunks[y][x]:
+                                found_chunk = True
+                                break
+
+                    if not found_chunk:
+                        del_chunks.append(new_chunk)
+
+            self.delete_chunks(del_chunks)
+
+            # Draw the chunks seen
             self.visible_chunks.clear()
             self.visible_chunks[: + len(new_chunks)] = new_chunks
             for row in new_chunks:
@@ -324,20 +346,29 @@ class GameRenderer:
                     if chunk.chunk_surface == None:
                         # print("Create new surface")
                         chunk.chunk_surface = pygame.Surface(chunk.surface_size, pygame.SRCALPHA)
+            # NOTE: This will draw on the chunk regardless of it being already drawn onto or not. Must fix for boost in performance
+            # NOTE: I don't like this method
             self.load_chunks(self.hexmap)
 
     # Delete a list of chunks
-    def delete_chunks(self, chunks : list[list[HexChunk]]):
-        for row in chunks:
-            for chunk in row:
-                del chunk.chunk_surface
-                chunk.chunk_surface = None
-            row.clear()
+    def delete_chunks(self, chunks : list[HexChunk]):
+        for ch in chunks:
+            if isinstance(ch, HexChunk) and ch.chunk_surface:
+                del ch.chunk_surface
+                ch.chunk_surface = None
+            else:
+                print(f"what is this?? {ch.start_position}")
         chunks.clear()
 
     # Delete all visible chunks
     def clear_visible_chunks(self):
-        self.delete_chunks(self.visible_chunks)
+        for row in self.visible_chunks:
+            for chunk in row:
+                if chunk.chunk_surface:
+                    del chunk.chunk_surface
+                    chunk.chunk_surface = None
+            row.clear()
+        self.visible_chunks.clear()
 
     # Update a chunk from a changed tile
     def update_chunk(self, tile : Hex.Hex):
