@@ -1,4 +1,5 @@
 from Hex import Hex
+import random
 
 class HexMap:
     def __init__(self, x_tile_count : int, y_tile_count : int, default_owner : int = -1):
@@ -10,9 +11,13 @@ class HexMap:
         self.dimensions = (x_count_new, y_count_new)
 
     def fill_map(self, default_owner : int = -1):
+        local_owner = default_owner
         for y in range(self.dimensions[1]):
             for x in range(self.dimensions[0]):
-                self.hexmap[y].append(Hex(x, y, default_owner))
+                # Get a random owner
+                if default_owner == -2:
+                    local_owner = random.randrange(0, 3)
+                self.hexmap[y].append(Hex(x, y, local_owner))
             self.hexmap.append([])
 
     def get_hex_from_pos(self, x_pos : int, y_pos : int):

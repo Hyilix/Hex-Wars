@@ -36,13 +36,13 @@ def draw_button():
 camera_test = GameRenderer.Camera(screen_size, (0, 0), 1)
 
 # Create a GameRenderer
-color_scheme = [colors.gray_light, colors.red, colors.blue, colors.green, colors.yellow]
+color_scheme = [colors.gray_light, colors.red, colors.blue, colors.green, colors.yellow, colors.purple, colors.gray_dark, colors.cyan]
 renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
 
 renderer.load_hex_surface(1)
 
 # Create and fill a map
-test_hex_map = HexMap.HexMap(300, 300, 0)
+test_hex_map = HexMap.HexMap(300, 300, -2)
 renderer.init_chunks(test_hex_map.dimensions)
 renderer.get_visible_chunks()
 renderer.load_chunks(test_hex_map)

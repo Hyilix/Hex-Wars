@@ -13,7 +13,7 @@ from utils import clamp
 DEFAULT_TEXTURE_PATH : str = "../assets/textures/"
 
 # The default chunk size in tiles. It is intended for the first value to be even
-DEFAULT_CHUNK_SIZE = (8, 8)
+DEFAULT_CHUNK_SIZE = (4, 4)
 
 # The zoom values to cache chunk resize
 CHUNK_ZOOM_CACHE = [0.3, 0.5, 0.7, 1.0, 1.2, 1.5, 1.7, 2.0, 2.3, 2.5, 2.7, 3.0]
@@ -165,7 +165,7 @@ class GameRenderer:
         if map_dimensions[1] % self.chunk_size[1]:
             chunks_y += 1
 
-        # print("chunks:", chunks_x, chunks_y)
+        print("chunks:", chunks_x, chunks_y)
 
         # Create the chunks
         for y in range(chunks_y):
@@ -207,7 +207,7 @@ class GameRenderer:
         if not temp_hex_surface:
             temp_hex_surface = self.add_hex_color(new_color)
 
-        temp_hex_surface = pygame.transform.scale_by(temp_hex_surface, self.cached_zoom)
+        # temp_hex_surface = pygame.transform.scale_by(temp_hex_surface, self.cached_zoom)
 
         # Render the hex on the chunk surface
         # Calculate the position of the hex before rendering
@@ -254,9 +254,6 @@ class GameRenderer:
                         chunk = self.visible_chunks[y // self.chunk_size[1]][x // self.chunk_size[0]]
                         self.draw_tile(tile, color, chunk.chunk_surface)
 
-        if not self.chunks[0][0]:
-            return
-
     # Get all chunks inside the camera
     def get_visible_chunks(self):
         new_chunks = []
@@ -272,16 +269,18 @@ class GameRenderer:
         (pos_1_x, pos_1_y) = (pos_1[0] // chunk_size[0], pos_1[1] // chunk_size[1])
         (pos_2_x, pos_2_y) = (pos_2[0] // chunk_size[0], pos_2[1] // chunk_size[1])
 
-        pos_1_x = clamp(pos_1_x, 0, self.chunk_size[0])
-        pos_2_x = clamp(pos_2_x, 0, self.chunk_size[0])
-        pos_1_y = clamp(pos_1_y, 0, self.chunk_size[1])
-        pos_2_y = clamp(pos_2_y, 0, self.chunk_size[1])
+        max_pos = (len(self.chunks[0]), len(self.chunks))
+
+        pos_1_x = clamp(pos_1_x, 0, max_pos[0])
+        pos_2_x = clamp(pos_2_x, 0, max_pos[0])
+        pos_1_y = clamp(pos_1_y, 0, max_pos[1])
+        pos_2_y = clamp(pos_2_y, 0, max_pos[1])
 
         index = 0
 
-        for y in range(pos_1_y, clamp(pos_2_y + 1, 0, self.chunk_size[1])):
+        for y in range(pos_1_y, clamp(pos_2_y + 1, 0, max_pos[1])):
             new_chunks.append([])
-            for x in range(pos_1_x, clamp(pos_2_x + 1, 0, self.chunk_size[0])):
+            for x in range(pos_1_x, clamp(pos_2_x + 1, 0, max_pos[0])):
                 current_chunk = self.chunks[y][x] 
                 # print("Chunk", (x, y))
 
@@ -390,8 +389,11 @@ class GameRenderer:
                 current_chunk = self.chunks[y][x]
 
                 # Get the position for the next chunk
-                x_chunk_pos = x * chunk_size[0] * self.cached_zoom - (x * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
-                y_chunk_pos = y * chunk_size[1] * self.cached_zoom - (y * self.hex_surface_basic_size[1] * self.cached_zoom // 2)
+                # x_chunk_pos = x * chunk_size[0] * self.cached_zoom - (x * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
+                # y_chunk_pos = y * chunk_size[1] * self.cached_zoom - (y * self.hex_surface_basic_size[1] * self.cached_zoom // 2)
+
+                x_chunk_pos = self.visible_chunks[y][x].start_position[0]
+                y_chunk_pos = self.visible_chunks[y][x].start_position[1]
 
                 # Apply camera offset
                 x_chunk_pos -= self.camera.get_corner_position()[0]
