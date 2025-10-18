@@ -315,12 +315,14 @@ class GameRenderer:
         if different_lists:
             print("DIFFERENT")
             print(f"{len(new_chunks)} x {len(new_chunks[0])}")
-            # self.visible_chunks = visible_chunks
+
+            self.delete_chunks(self.visible_chunks)
             self.visible_chunks.clear()
             self.visible_chunks[: + len(new_chunks)] = new_chunks
             for row in new_chunks:
                 for chunk in row:
                     if chunk.chunk_surface == None:
+                        # print("Create new surface")
                         chunk.chunk_surface = pygame.Surface(chunk.surface_size, pygame.SRCALPHA)
             self.load_chunks(self.hexmap)
 
@@ -368,5 +370,8 @@ class GameRenderer:
                 #              chunk_size[1] * self.current_zoom // current_chunk.chunk_scale)
                 #
                 # self.screen.blit(pygame.transform.scale(current_chunk.chunk_surface, new_scale), (x_chunk_pos, y_chunk_pos))
-                self.screen.blit(current_chunk.chunk_surface, (x_chunk_pos, y_chunk_pos))
+                if current_chunk.chunk_surface:
+                    self.screen.blit(current_chunk.chunk_surface, (x_chunk_pos, y_chunk_pos))
+                # else:
+                #     print("Blitting problem found: no surface")
 

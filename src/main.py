@@ -42,11 +42,12 @@ renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
 renderer.load_hex_surface(1)
 
 # Create and fill a map
-test_hex_map = HexMap.HexMap(100, 100, 0)
+test_hex_map = HexMap.HexMap(300, 300, 0)
 renderer.init_chunks(test_hex_map.dimensions)
 renderer.get_visible_chunks()
 renderer.load_chunks(test_hex_map)
 
+FPS = 144
 
 running = True
 while running:
@@ -94,6 +95,8 @@ while running:
     renderer.draw_chunks()
     pygame.display.flip()      # update display
 
-    clock.tick(60)  # limit to 60 frames per second
+    clock.tick(FPS)  # limit to 60 frames per second
+    pygame.display.set_caption("Hex Game FPS: " + str(round(clock.get_fps(), 1)))
+    # print(f"Current FPS = {clock.get_fps()}")
 
 pygame.quit()
