@@ -16,7 +16,7 @@ class HexMap:
             for x in range(self.dimensions[0]):
                 # Get a random owner
                 if default_owner == -2:
-                    local_owner = random.randrange(0, 3)
+                    local_owner = random.randrange(0, 8)
                 self.hexmap[y].append(Hex(x, y, local_owner))
             self.hexmap.append([])
 

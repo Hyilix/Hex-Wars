@@ -1,5 +1,6 @@
 import pygame
 from pygame.transform import threshold
+import math
 
 import Hex
 import HexMap
@@ -13,10 +14,10 @@ from utils import clamp
 DEFAULT_TEXTURE_PATH : str = "../assets/textures/"
 
 # The default chunk size in tiles. It is intended for the first value to be even
-DEFAULT_CHUNK_SIZE = (4, 4)
+DEFAULT_CHUNK_SIZE = (8, 8)
 
 # The zoom values to cache chunk resize
-CHUNK_ZOOM_CACHE = [0.3, 0.5, 0.7, 1.0, 1.2, 1.5, 1.7, 2.0, 2.3, 2.5, 2.7, 3.0]
+CHUNK_ZOOM_CACHE = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
 
 # TODO: Lazy chunk generation, generate chunks on demand and leave them in Cache
 # TODO: Cache chunks at preset zoom levels, and clear cache when new zoom level entered
@@ -74,9 +75,10 @@ class HexChunk:
         self.chunk_size = DEFAULT_CHUNK_SIZE
         self.tile_size = tile_size
         self.surface_size : tuple[int, int] = (tile_size[0] * self.chunk_size[0] * 3 // 4 + tile_size[0] // 4,
-                             tile_size[1] * self.chunk_size[1] + tile_size[1] // 2)
+                                                tile_size[1] * self.chunk_size[1] + tile_size[1] // 2)
         self.start_position = (start_position[0] * self.surface_size[0],
                                start_position[1] * self.surface_size[1])
+        self.start_raw_position = start_position
 
         self.chunk_surface = None #= pygame.Surface(self.surface_size, pygame.SRCALPHA)
         self.chunk_scale = 1
@@ -241,18 +243,33 @@ class GameRenderer:
         map_size = hexmap.dimensions
         print(map_size)
 
-        visible_size = (len(self.visible_chunks[0]) * self.chunk_size[0], len(self.visible_chunks) * self.chunk_size[1])
+        tile_temp = self.visible_chunks[0][0]
+        tile_size = tile_temp.tile_size
 
-        for y in range(map_size[1]):
-            if y < visible_size[1]:
-                for x in range(map_size[0]):
-                    if x < visible_size[0]:
-                        tile = hexmap.get_hexmap()[y][x]
-                        color = self.color_scheme[tile.owner]
+        (x_ratio, y_ratio) = (math.ceil(tile_temp.start_position[0] / tile_temp.surface_size[0]),
+                              math.ceil(tile_temp.start_position[1] / tile_temp.surface_size[1]))
 
-                        # print(f"stuff = {y} x {y // self.chunk_size[1]} , {x} x {x // self.chunk_size[0]}")
-                        chunk = self.visible_chunks[y // self.chunk_size[1]][x // self.chunk_size[0]]
-                        self.draw_tile(tile, color, chunk.chunk_surface)
+        print(f"ratio = {(x_ratio, y_ratio)}")
+
+        # start_visible_size = (math.ceil((tile_temp.start_position[0] + x_ratio * tile_size[0] / 4) / tile_size[0]),
+        #                       int((tile_temp.start_position[1] + y_ratio * tile_size[1] / 2) / tile_size[1]))
+        start_visible_size = (tile_temp.start_raw_position[0] * self.chunk_size[0], tile_temp.start_raw_position[1] * self.chunk_size[1])
+
+        end_visible_size = (clamp(len(self.visible_chunks[0]) * self.chunk_size[0], 0, map_size[0]),
+                            clamp(len(self.visible_chunks) * self.chunk_size[1], 0, map_size[1]))
+
+        print(f"load positions: {start_visible_size} , {end_visible_size}")
+
+        for y in range(start_visible_size[1], start_visible_size[1] + end_visible_size[1]):
+            for x in range(start_visible_size[0], start_visible_size[0] + end_visible_size[0]):
+                tile = hexmap.get_hexmap()[y][x]
+                color = self.color_scheme[tile.owner]
+
+                # print(f"stuff = {y} x {y // self.chunk_size[1]} , {x} x {x // self.chunk_size[0]}")
+                (x_chunk, y_chunk) = ((x - start_visible_size[0]) // self.chunk_size[0],
+                                      (y - start_visible_size[1]) // self.chunk_size[1])
+                chunk = self.visible_chunks[y_chunk][x_chunk]
+                self.draw_tile(tile, color, chunk.chunk_surface)
 
     # Get all chunks inside the camera
     def get_visible_chunks(self):
@@ -321,20 +338,21 @@ class GameRenderer:
 
             # Delete the chunks no longer seen
             del_chunks = []
-            for row in new_chunks:
+            for row in self.visible_chunks:
                 for new_chunk in row:
                     found_chunk = False;
-                    for y in range(len(self.visible_chunks)):
+                    for y in range(len(new_chunks)):
                         if found_chunk == True:
                             break
-                        for x in range(len(self.visible_chunks[y])):
-                            if new_chunk == self.visible_chunks[y][x]:
+                        for x in range(len(new_chunks[y])):
+                            if new_chunk == new_chunks[y][x]:
                                 found_chunk = True
                                 break
 
                     if not found_chunk:
                         del_chunks.append(new_chunk)
 
+            print(f"to delete : {len(del_chunks)}")
             self.delete_chunks(del_chunks)
 
             # Draw the chunks seen
@@ -345,6 +363,7 @@ class GameRenderer:
                     if chunk.chunk_surface == None:
                         # print("Create new surface")
                         chunk.chunk_surface = pygame.Surface(chunk.surface_size, pygame.SRCALPHA)
+
             # NOTE: This will draw on the chunk regardless of it being already drawn onto or not. Must fix for boost in performance
             # NOTE: I don't like this method
             self.load_chunks(self.hexmap)
@@ -353,6 +372,7 @@ class GameRenderer:
     def delete_chunks(self, chunks : list[HexChunk]):
         for ch in chunks:
             if isinstance(ch, HexChunk) and ch.chunk_surface:
+                print(f"delete chunk of position: {ch.start_position}")
                 del ch.chunk_surface
                 ch.chunk_surface = None
             else:
@@ -386,14 +406,14 @@ class GameRenderer:
         # Draw only the visible chunks
         for y in range(len(self.visible_chunks)):
             for x in range(len(self.visible_chunks[y])):
-                current_chunk = self.chunks[y][x]
+                current_chunk = self.visible_chunks[y][x]
 
                 # Get the position for the next chunk
                 # x_chunk_pos = x * chunk_size[0] * self.cached_zoom - (x * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
                 # y_chunk_pos = y * chunk_size[1] * self.cached_zoom - (y * self.hex_surface_basic_size[1] * self.cached_zoom // 2)
 
-                x_chunk_pos = self.visible_chunks[y][x].start_position[0]
-                y_chunk_pos = self.visible_chunks[y][x].start_position[1]
+                x_chunk_pos = current_chunk.start_position[0] - (current_chunk.start_raw_position[0] * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
+                y_chunk_pos = current_chunk.start_position[1] - (current_chunk.start_raw_position[1] * self.hex_surface_basic_size[1] * self.cached_zoom // 2)
 
                 # Apply camera offset
                 x_chunk_pos -= self.camera.get_corner_position()[0]
