@@ -145,17 +145,20 @@ class GameRenderer:
         self.background_surface = pygame.image.load(self.texture_path + img_name)
 
     def set_zoom(self, new_zoom : float):
+        new_zoom = round(new_zoom, 1)
         new_zoom = clamp(new_zoom, self.zoom_settings[0], self.zoom_settings[1])
         self.current_zoom = new_zoom
 
+        print(f"New zoom = {new_zoom}")
+
         if new_zoom in CHUNK_ZOOM_CACHE:
+            print("Poof, new zoom chunks")
             self.cached_zoom = new_zoom
 
+            self.camera.set_zoom_size(new_zoom)
             # Clear previous chunk cache and create new one
             self.clear_visible_chunks()
             self.get_visible_chunks()
-
-        self.camera.set_zoom_size(new_zoom)
 
     # Initialise all chunks into memory
     def init_chunks(self, map_dimensions : tuple[int, int]):
@@ -209,7 +212,7 @@ class GameRenderer:
         if not temp_hex_surface:
             temp_hex_surface = self.add_hex_color(new_color)
 
-        # temp_hex_surface = pygame.transform.scale_by(temp_hex_surface, self.cached_zoom)
+        temp_hex_surface = pygame.transform.scale_by(temp_hex_surface, self.cached_zoom)
 
         # Render the hex on the chunk surface
         # Calculate the position of the hex before rendering
@@ -270,10 +273,11 @@ class GameRenderer:
 
         # print("NEW CHUNKS")
 
-        chunk_size = self.chunks[0][0].surface_size
+        chunk_size = (int(self.chunks[0][0].surface_size[0] * self.cached_zoom), int(self.chunks[0][0].surface_size[1] * self.cached_zoom))
         (pos_x_1, pos_y_1) = self.camera.get_corner_position()
         (pos_x_2, pos_y_2) = (pos_x_1 + self.camera.size[0], pos_y_1 + self.camera.size[1])
 
+        # Add Hex chunk offset
         pos_x_1 += int((pos_x_1 // chunk_size[0] + 1) * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
         pos_y_1 += int((pos_y_1 // chunk_size[1] + 1) * self.hex_surface_basic_size[1] * self.cached_zoom // 2)
         pos_x_2 += int((pos_x_2 // chunk_size[0] + 1) * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
@@ -287,12 +291,9 @@ class GameRenderer:
 
         max_pos = (len(self.chunks[0]), len(self.chunks))
 
-        # x_chunk_pos = current_chunk.start_position[0] - (current_chunk.start_raw_position[0] * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
-
-        # Add Hex offset
-
         print(f"camera index = {pos_1_x} , {pos_1_y} ; {pos_2_x} , {pos_2_y}")
 
+        # Clamp the positions to map size
         pos_1_x = clamp(pos_1_x, 0, max_pos[0])
         pos_2_x = clamp(pos_2_x, 0, max_pos[0])
         pos_1_y = clamp(pos_1_y, 0, max_pos[1])
@@ -367,7 +368,8 @@ class GameRenderer:
                 for chunk in row:
                     if chunk.chunk_surface == None:
                         # print("Create new surface")
-                        chunk.chunk_surface = pygame.Surface(chunk.surface_size, pygame.SRCALPHA)
+                        new_chunk_size = (chunk.surface_size[0] * self.cached_zoom, chunk.surface_size[1] * self.cached_zoom)
+                        chunk.chunk_surface = pygame.Surface(new_chunk_size, pygame.SRCALPHA)
 
             # NOTE: This will draw on the chunk regardless of it being already drawn onto or not. Must fix for boost in performance
             # NOTE: I don't like this method
@@ -386,13 +388,14 @@ class GameRenderer:
 
     # Delete all visible chunks
     def clear_visible_chunks(self):
-        for row in self.visible_chunks:
-            for chunk in row:
+        for y in range(len(self.visible_chunks)):
+            for chunk in self.visible_chunks[y]:
                 if chunk.chunk_surface:
                     del chunk.chunk_surface
                     chunk.chunk_surface = None
-            row.clear()
+            self.visible_chunks[y].clear()
         self.visible_chunks.clear()
+        self.visible_chunks = []
 
     # Update a chunk from a changed tile
     def update_chunk(self, tile : Hex.Hex):
@@ -412,22 +415,13 @@ class GameRenderer:
                 current_chunk = self.visible_chunks[y][x]
 
                 # Get the position for the next chunk
-                # x_chunk_pos = x * chunk_size[0] * self.cached_zoom - (x * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
-                # y_chunk_pos = y * chunk_size[1] * self.cached_zoom - (y * self.hex_surface_basic_size[1] * self.cached_zoom // 2)
-
-                x_chunk_pos = current_chunk.start_position[0] - (current_chunk.start_raw_position[0] * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
-                y_chunk_pos = current_chunk.start_position[1] - (current_chunk.start_raw_position[1] * self.hex_surface_basic_size[1] * self.cached_zoom // 2)
+                x_chunk_pos = current_chunk.start_position[0] * self.cached_zoom - (current_chunk.start_raw_position[0] * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
+                y_chunk_pos = current_chunk.start_position[1] * self.cached_zoom - (current_chunk.start_raw_position[1] * self.hex_surface_basic_size[1] * self.cached_zoom // 2)
 
                 # Apply camera offset
                 x_chunk_pos -= self.camera.get_corner_position()[0]
                 y_chunk_pos -= self.camera.get_corner_position()[1]
 
-                # new_scale = (chunk_size[0] * self.current_zoom // current_chunk.chunk_scale,
-                #              chunk_size[1] * self.current_zoom // current_chunk.chunk_scale)
-                #
-                # self.screen.blit(pygame.transform.scale(current_chunk.chunk_surface, new_scale), (x_chunk_pos, y_chunk_pos))
                 if current_chunk.chunk_surface:
                     self.screen.blit(current_chunk.chunk_surface, (x_chunk_pos, y_chunk_pos))
-                # else:
-                #     print("Blitting problem found: no surface")
 
