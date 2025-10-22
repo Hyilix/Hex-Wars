@@ -36,7 +36,7 @@ def draw_button():
 camera_test = GameRenderer.Camera(screen_size, (0, 0), 1)
 
 # Create a GameRenderer
-color_scheme = [colors.gray_light, colors.red, colors.blue, colors.green, colors.yellow, colors.purple, colors.gray_dark, colors.cyan]
+color_scheme = [colors.gray_dark, colors.red, colors.blue, colors.green, colors.yellow, colors.purple, colors.gray_dark, colors.cyan]
 renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
 
 renderer.load_hex_surface(1)

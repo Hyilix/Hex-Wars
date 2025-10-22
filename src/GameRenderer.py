@@ -244,15 +244,7 @@ class GameRenderer:
         print(map_size)
 
         tile_temp = self.visible_chunks[0][0]
-        tile_size = tile_temp.tile_size
 
-        (x_ratio, y_ratio) = (math.ceil(tile_temp.start_position[0] / tile_temp.surface_size[0]),
-                              math.ceil(tile_temp.start_position[1] / tile_temp.surface_size[1]))
-
-        print(f"ratio = {(x_ratio, y_ratio)}")
-
-        # start_visible_size = (math.ceil((tile_temp.start_position[0] + x_ratio * tile_size[0] / 4) / tile_size[0]),
-        #                       int((tile_temp.start_position[1] + y_ratio * tile_size[1] / 2) / tile_size[1]))
         start_visible_size = (tile_temp.start_raw_position[0] * self.chunk_size[0], tile_temp.start_raw_position[1] * self.chunk_size[1])
 
         end_visible_size = (clamp(len(self.visible_chunks[0]) * self.chunk_size[0], 0, map_size[0]),
@@ -260,12 +252,11 @@ class GameRenderer:
 
         print(f"load positions: {start_visible_size} , {end_visible_size}")
 
-        for y in range(start_visible_size[1], start_visible_size[1] + end_visible_size[1]):
-            for x in range(start_visible_size[0], start_visible_size[0] + end_visible_size[0]):
+        for y in range(start_visible_size[1], clamp(start_visible_size[1] + end_visible_size[1], 0, map_size[1])):
+            for x in range(start_visible_size[0], clamp(start_visible_size[0] + end_visible_size[0], 0, map_size[0])):
                 tile = hexmap.get_hexmap()[y][x]
                 color = self.color_scheme[tile.owner]
 
-                # print(f"stuff = {y} x {y // self.chunk_size[1]} , {x} x {x // self.chunk_size[0]}")
                 (x_chunk, y_chunk) = ((x - start_visible_size[0]) // self.chunk_size[0],
                                       (y - start_visible_size[1]) // self.chunk_size[1])
                 chunk = self.visible_chunks[y_chunk][x_chunk]
@@ -280,13 +271,27 @@ class GameRenderer:
         # print("NEW CHUNKS")
 
         chunk_size = self.chunks[0][0].surface_size
-        pos_1 = self.camera.get_corner_position()
-        pos_2 = (pos_1[0] + self.camera.size[0], pos_1[1] + self.camera.size[1])
+        (pos_x_1, pos_y_1) = self.camera.get_corner_position()
+        (pos_x_2, pos_y_2) = (pos_x_1 + self.camera.size[0], pos_y_1 + self.camera.size[1])
+
+        pos_x_1 += int((pos_x_1 // chunk_size[0] + 1) * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
+        pos_y_1 += int((pos_y_1 // chunk_size[1] + 1) * self.hex_surface_basic_size[1] * self.cached_zoom // 2)
+        pos_x_2 += int((pos_x_2 // chunk_size[0] + 1) * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
+        pos_y_2 += int((pos_y_2 // chunk_size[1] + 1) * self.hex_surface_basic_size[1] * self.cached_zoom // 2)
+
+        pos_1 = (pos_x_1, pos_y_1)
+        pos_2 = (pos_x_2, pos_y_2)
 
         (pos_1_x, pos_1_y) = (pos_1[0] // chunk_size[0], pos_1[1] // chunk_size[1])
         (pos_2_x, pos_2_y) = (pos_2[0] // chunk_size[0], pos_2[1] // chunk_size[1])
 
         max_pos = (len(self.chunks[0]), len(self.chunks))
+
+        # x_chunk_pos = current_chunk.start_position[0] - (current_chunk.start_raw_position[0] * self.hex_surface_basic_size[0] * self.cached_zoom // 4)
+
+        # Add Hex offset
+
+        print(f"camera index = {pos_1_x} , {pos_1_y} ; {pos_2_x} , {pos_2_y}")
 
         pos_1_x = clamp(pos_1_x, 0, max_pos[0])
         pos_2_x = clamp(pos_2_x, 0, max_pos[0])
@@ -400,8 +405,6 @@ class GameRenderer:
     def draw_chunks(self):
         if not self.chunks[0][0]:
             return
-
-        chunk_size : tuple[int, int] = self.chunks[0][0].surface_size
 
         # Draw only the visible chunks
         for y in range(len(self.visible_chunks)):
