@@ -66,9 +66,9 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            if quit_button1.collidepoint(event.pos):
-                pygame.quit()
-                sys.exit()
+            # if quit_button1.collidepoint(event.pos):
+            #     pygame.quit()
+            #     sys.exit()
             # Camera panning on R_CLICK
             if event.button == 3:
                 camera_test.pan_pivot = pygame.mouse.get_pos()
@@ -88,6 +88,8 @@ while running:
                 print(f"Mouse clicked at: {mouse_pos}")
                 if quit_button1.collidepoint(event.pos):
                     print("Button clicked!")
+
+                print(camera_test.get_tile_at_position(mouse_pos))
 
     # 3. draw everything
     screen.fill((50, 50, 50))  # background color

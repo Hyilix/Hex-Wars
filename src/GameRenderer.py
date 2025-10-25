@@ -6,6 +6,7 @@ import Hex
 import HexMap
 import State
 import Player
+import Collisions_2d
 
 import colors
 from utils import clamp
@@ -19,9 +20,6 @@ DEFAULT_CHUNK_SIZE = (8, 8)
 # The zoom values to cache chunk resize
 CHUNK_ZOOM_CACHE = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
 
-# TODO: Lazy chunk generation, generate chunks on demand and leave them in Cache
-# TODO: Cache chunks at preset zoom levels, and clear cache when new zoom level entered
-
 class Camera:
     def __init__(self, size : tuple[int, int], position : tuple[int, int], zoom : int):
         self.position : tuple[int, int] = position
@@ -30,6 +28,11 @@ class Camera:
         self.zoom = zoom
         self.panning_mode = False
         self.pan_pivot : tuple[int, int] = (0, 0)
+
+        self.tile_size_ref : tuple[int, int] = (0, 0)
+
+    def set_tile_size_ref(self, new_ref : tuple[int, int]):
+        self.tile_size_ref = new_ref
 
     # Change the size of the camera
     def set_zoom_size(self, zoom : float):
@@ -48,6 +51,51 @@ class Camera:
         (x_pos, y_pos) = self.position
         self.set_position((x_pos - direction[0], y_pos - direction[1]))
         self.pan_pivot = (self.pan_pivot[0] + direction[0], self.pan_pivot[1] + direction[1])
+
+    # Get a tile position from camera position
+    def get_tile_at_position(self, camera_position : tuple[int, int]):
+        # Get world position
+        (x_world, y_world) = (camera_position[0] + self.get_corner_position()[0], camera_position[1] + self.get_corner_position()[1])
+
+        (x_tile_ref, y_tile_ref) = (self.tile_size_ref[0] * self.zoom, self.tile_size_ref[1] * self.zoom)
+
+        (x_tile, y_tile) = (x_world // int(x_tile_ref * 3 / 2), y_world // int(y_tile_ref))
+        (x_mod, y_mod) = (x_world % int(x_tile_ref * 3 / 2), y_world % int(y_tile_ref))
+
+        x_tile *= 2
+        y_mod //= int(y_tile_ref // 2)
+        if y_mod == 0:
+            y_mod = -1
+
+        print(f"x_mod = {x_mod}, y_mod = {y_mod}")
+
+        if x_mod > int(x_tile_ref):
+            # Tile placement changes slightly when x is odd
+            x_tile += 1
+            y_tile = (y_world - int(y_tile_ref // 2)) // int(y_tile_ref)
+        elif x_mod >= int(x_tile_ref * 3 / 4) and x_mod <= int(x_tile_ref):
+            # Check for accurate point at the border of 2 tiles
+            (x_corner_1, y_corner_1) = (x_world // int(x_tile_ref * 3 / 4), y_world // int(y_tile_ref))
+            (x_corner_1, y_corner_1) = (x_corner_1 * int(x_tile_ref * 3 / 4), y_corner_1 * int(y_tile_ref))
+            (x_corner_2, y_corner_2) = (x_corner_1 + int(x_tile_ref / 4), y_corner_1 + y_mod * int(y_tile_ref // 2))
+
+            print(f"Corners: 1 {x_corner_1, y_corner_1} ; 2 {x_corner_2, y_corner_2}")
+
+            even_trig = [(x_corner_1, y_corner_1), (x_corner_1, y_corner_1 + int(y_tile_ref)), (x_corner_2, y_corner_2 - (y_mod - 1) * int(y_tile_ref // 2))]
+            odd_trig = [(x_corner_1, y_corner_1), (x_corner_2, y_corner_2), (x_corner_2, y_corner_2 + int(y_tile_ref))]
+
+            trig_collision_even = Collisions_2d.point_trig((x_world, y_world), even_trig)
+            trig_collision_odd = Collisions_2d.point_trig((x_world, y_world), odd_trig)
+
+            print(f"Collisions: Odd : {trig_collision_odd}, Even : {trig_collision_even}")
+
+            if trig_collision_odd:
+                x_tile += 1
+                y_tile -= 1
+            # elif trig_collision_odd:
+            #     x_tile += 1
+
+        return (x_tile, y_tile)
 
 class HexCacheUnit:
     def __init__(self, color : tuple[int, int, int], surface : pygame.Surface):
@@ -139,6 +187,8 @@ class GameRenderer:
 
         self.clear_hex_cache()
         self.hex_cache = [HexCacheUnit(colors.shader_color, self.hex_surface)]
+
+        self.camera.set_tile_size_ref(self.hex_surface_basic_size)
 
     # Load new background surface
     def load_background_surface(self, scale : int = 1, img_name : str = "Background.png"):
@@ -291,7 +341,7 @@ class GameRenderer:
 
         max_pos = (len(self.chunks[0]), len(self.chunks))
 
-        print(f"camera index = {pos_1_x} , {pos_1_y} ; {pos_2_x} , {pos_2_y}")
+        # print(f"camera index = {pos_1_x} , {pos_1_y} ; {pos_2_x} , {pos_2_y}")
 
         # Clamp the positions to map size
         pos_1_x = clamp(pos_1_x, 0, max_pos[0])
