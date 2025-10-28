@@ -11,7 +11,7 @@ import colors
 
 pygame.init()
 
-screen_size = (2000, 1000)
+screen_size = (1000, 600)
 screen = pygame.display.set_mode(screen_size)
 
 pygame.display.set_caption("Hex game")

@@ -24,7 +24,6 @@ class Camera:
     def __init__(self, size : tuple[int, int], position : tuple[int, int], zoom : int):
         self.position : tuple[int, int] = position
         self.size = size
-        # self.camera_boundaries = boundaries
         self.zoom = zoom
         self.panning_mode = False
         self.pan_pivot : tuple[int, int] = (0, 0)
@@ -82,7 +81,7 @@ class Camera:
             print(f"Corners: 1 {x_corner_1, y_corner_1} ; 2 {x_corner_2, y_corner_2}")
 
             even_trig = [(x_corner_1, y_corner_1), (x_corner_1, y_corner_1 + int(y_tile_ref)), (x_corner_2, y_corner_2 - (y_mod - 1) * int(y_tile_ref // 2))]
-            odd_trig = [(x_corner_1, y_corner_1), (x_corner_2, y_corner_2), (x_corner_2, y_corner_2 + int(y_tile_ref))]
+            odd_trig = [(x_corner_1, y_corner_1 + (y_mod + 1) * int(y_tile_ref // 2)), (x_corner_2, y_corner_2), (x_corner_2, y_corner_2 + int(y_tile_ref))]
 
             trig_collision_even = Collisions_2d.point_trig((x_world, y_world), even_trig)
             trig_collision_odd = Collisions_2d.point_trig((x_world, y_world), odd_trig)
@@ -91,9 +90,8 @@ class Camera:
 
             if trig_collision_odd:
                 x_tile += 1
-                y_tile -= 1
-            # elif trig_collision_odd:
-            #     x_tile += 1
+                # y_mod switches sign when on x odd position (lower y position)
+                y_tile += (y_mod - 1) // 2
 
         return (x_tile, y_tile)
 
@@ -363,18 +361,6 @@ class GameRenderer:
 
         different_lists = False
 
-        # print("Lists")
-        # if self.visible_chunks[0] and isinstance(self.visible_chunks[0][0], HexChunk):
-        #     print("self")
-        #     for y in self.visible_chunks:
-        #         for x in y:
-        #             print(x.start_position)
-        #
-        #     print("new")
-        #     for y in new_chunks:
-        #         for x in y:
-        #             print(x.start_position)
-
         if len(self.visible_chunks) != len(new_chunks) or len(self.visible_chunks[0]) != len(new_chunks[0]):
             different_lists = True
         else:
@@ -387,10 +373,6 @@ class GameRenderer:
         if different_lists:
             print("DIFFERENT")
             print(f"{len(new_chunks)} x {len(new_chunks[0])}")
-
-            # self.delete_chunks(self.visible_chunks)
-            # self.visible_chunks.clear()
-            # self.visible_chunks[: + len(new_chunks)] = new_chunks
 
             # Delete the chunks no longer seen
             del_chunks = []
