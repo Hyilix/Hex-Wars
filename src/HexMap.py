@@ -10,6 +10,9 @@ class HexMap:
     def change_map_size(self, x_count_new : int, y_count_new : int):
         self.dimensions = (x_count_new, y_count_new)
 
+    def get_tile_at_position(self, tile_pos : tuple[int, int]):
+        return self.hexmap[tile_pos[1]][tile_pos[0]]
+
     def fill_map(self, default_owner : int = -1):
         local_owner = default_owner
         for y in range(self.dimensions[1]):

@@ -42,7 +42,7 @@ renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
 renderer.load_hex_surface(1)
 
 # Create and fill a map
-test_hex_map = HexMap.HexMap(300, 300, -2)
+test_hex_map = HexMap.HexMap(300, 300, 0)
 renderer.init_chunks(test_hex_map.dimensions)
 renderer.get_visible_chunks()
 renderer.load_chunks(test_hex_map)
@@ -89,7 +89,10 @@ while running:
                 if quit_button1.collidepoint(event.pos):
                     print("Button clicked!")
 
-                print(camera_test.get_tile_at_position(mouse_pos))
+                tile_pos = camera_test.get_tile_at_position(mouse_pos)
+                current_tile = test_hex_map.get_tile_at_position(tile_pos)
+                current_tile.set_owner(1)
+                renderer.update_chunk(current_tile)
 
     # 3. draw everything
     screen.fill((50, 50, 50))  # background color

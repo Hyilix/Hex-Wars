@@ -121,10 +121,18 @@ class Camera:
 
         return (x_tile, y_tile)
 
-class HexCacheUnit:
-    def __init__(self, color : tuple[int, int, int], surface : pygame.Surface):
-        self.color = color
+class CacheUnit:
+    def __init__(self, surface : pygame.Surface):
         self.surface = surface
+
+    # Delete the surface
+    def delete_surface(self):
+        del self.surface
+
+class HexCacheUnit(CacheUnit):
+    def __init__(self, color : tuple[int, int, int], surface : pygame.Surface):
+        super().__init__(surface)
+        self.color = color
 
     # Change color of the hex
     def change_color(self, new_color : tuple[int, int, int]):
@@ -138,9 +146,9 @@ class HexCacheUnit:
         )
         self.color = new_color
 
-    # Delete this surface
-    def delete_surface(self):
-        del self.surface
+class DoodadCacheUnit(CacheUnit):
+    def __init__(self, surface : pygame.Surface):
+        super().__init__(surface)
 
 class HexChunk:
     def __init__(self, tile_size : tuple[int, int], start_position : tuple[int, int]):
@@ -192,7 +200,7 @@ class GameRenderer:
         self.cached_zoom = self.current_zoom
 
         # Colored Hexes Cache
-        self.hex_cache : list[HexCacheUnit] = []
+        self.cache_units : list[CacheUnit] = []
 
         # Chunk Surfaces Map
         self.chunks : list[list[HexChunk]] = []
@@ -209,8 +217,8 @@ class GameRenderer:
         self.hex_surface_basic_size = self.hex_surface.get_size()
         self.hex_surface_scale = scale
 
-        self.clear_hex_cache()
-        self.hex_cache = [HexCacheUnit(colors.shader_color, self.hex_surface)]
+        self.clear_cache_units()
+        self.cache_units = [HexCacheUnit(colors.shader_color, self.hex_surface)]
 
         self.camera.set_tile_size_ref(self.hex_surface_basic_size)
 
@@ -254,7 +262,7 @@ class GameRenderer:
 
     # Search in cache
     def find_hex_by_color(self, color : tuple[int, int, int]):
-        for unit in self.hex_cache:
+        for unit in self.cache_units:
             if unit.color == color:
                 return unit.surface
         return None
@@ -263,14 +271,14 @@ class GameRenderer:
     def add_hex_color(self, color : tuple[int, int, int]):
         hex_unit = HexCacheUnit(colors.shader_color, self.hex_surface.copy())
         hex_unit.change_color(color)
-        self.hex_cache.append(hex_unit)
+        self.cache_units.append(hex_unit)
         return hex_unit.surface
 
     # Clear the surface cache
-    def clear_hex_cache(self):
-        for unit in self.hex_cache:
+    def clear_cache_units(self):
+        for unit in self.cache_units:
             unit.delete_surface()
-            self.hex_cache.remove(unit)
+            self.cache_units.remove(unit)
             del unit
 
     # Draw one tile to the screen
