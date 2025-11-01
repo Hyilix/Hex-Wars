@@ -34,6 +34,11 @@ class Hex:
     def get_doodad(self):
         return self.doodad
 
+    def get_doodad_type(self):
+        if self.doodad:
+            return self.doodad.get_type()
+        return None
+
     def set_central_hex_status(self, is_central : bool):
         self.is_central_hex = is_central
 

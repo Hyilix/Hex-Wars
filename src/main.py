@@ -39,7 +39,7 @@ camera_test = GameRenderer.Camera(screen_size, (0, 0), 1)
 color_scheme = [colors.gray_dark, colors.red, colors.blue, colors.green, colors.yellow, colors.purple, colors.gray_dark, colors.cyan]
 renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
 
-renderer.load_hex_surface(1)
+renderer.load_hex_surface("HexTile.png", 1)
 
 # Create and fill a map
 test_hex_map = HexMap.HexMap(300, 300, 0)
@@ -92,6 +92,10 @@ while running:
                 tile_pos = camera_test.get_tile_at_position(mouse_pos)
                 current_tile = test_hex_map.get_tile_at_position(tile_pos)
                 current_tile.set_owner(1)
+
+                test_temp_doodad = Doodads.UnitTier1(1)
+                current_tile.set_doodad(test_temp_doodad)
+
                 renderer.update_chunk(current_tile)
 
     # 3. draw everything

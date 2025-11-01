@@ -147,8 +147,9 @@ class HexCacheUnit(CacheUnit):
         self.color = new_color
 
 class DoodadCacheUnit(CacheUnit):
-    def __init__(self, surface : pygame.Surface):
+    def __init__(self, surface : pygame.Surface, doodad_type : str):
         super().__init__(surface)
+        self.doodad_type = doodad_type
 
 class HexChunk:
     def __init__(self, tile_size : tuple[int, int], start_position : tuple[int, int]):
@@ -200,7 +201,8 @@ class GameRenderer:
         self.cached_zoom = self.current_zoom
 
         # Colored Hexes Cache
-        self.cache_units : list[CacheUnit] = []
+        self.hex_cache : list[HexCacheUnit] = []
+        self.doodad_cache : list[DoodadCacheUnit] = []
 
         # Chunk Surfaces Map
         self.chunks : list[list[HexChunk]] = []
@@ -212,20 +214,31 @@ class GameRenderer:
         self.visible_chunks = [[]]
 
     # Load new hex surface
-    def load_hex_surface(self, scale : float = 1, img_name : str = "HexTile.png"):
+    def load_hex_surface(self, img_name : str = "HexTile.png", scale : float = 1):
         self.hex_surface = pygame.image.load(self.texture_path + img_name)
         self.hex_surface_basic_size = self.hex_surface.get_size()
         self.hex_surface_scale = scale
 
-        self.clear_cache_units()
-        self.cache_units = [HexCacheUnit(colors.shader_color, self.hex_surface)]
+        self.clear_hex_cache()
+        # Add a scaled surface to the cache
+        scaled_hex = pygame.transform.scale_by(self.hex_surface, scale)
+        self.hex_cache = [HexCacheUnit(colors.shader_color, scaled_hex)]
 
         self.camera.set_tile_size_ref(self.hex_surface_basic_size)
+
+    # Load new doodad surface
+    def load_doodad_surface(self, img_name : str, doodad_type : str, scale : float = 1):
+        doodad_surface = pygame.image.load(self.texture_path + doodad_type + "s/" + img_name + ".png")
+        doodad_surface = pygame.transform.scale_by(doodad_surface, scale)
+
+        self.doodad_cache.append(DoodadCacheUnit(doodad_surface, doodad_type))
 
     # Load new background surface
     def load_background_surface(self, scale : int = 1, img_name : str = "Background.png"):
         self.background_surface = pygame.image.load(self.texture_path + img_name)
+        self.background_surface = pygame.transform.scale_by(self.background_surface, scale)
 
+    # Set the camera zoom
     def set_zoom(self, new_zoom : float):
         new_zoom = round(new_zoom, 1)
         new_zoom = clamp(new_zoom, self.zoom_settings[0], self.zoom_settings[1])
@@ -236,6 +249,9 @@ class GameRenderer:
         if new_zoom in CHUNK_ZOOM_CACHE:
             print("Poof, new zoom chunks")
             self.cached_zoom = new_zoom
+
+            # Clear doodad cache
+            self.clear_doodad_cache()
 
             self.camera.set_zoom_size(new_zoom)
             # Clear previous chunk cache and create new one
@@ -262,24 +278,37 @@ class GameRenderer:
 
     # Search in cache
     def find_hex_by_color(self, color : tuple[int, int, int]):
-        for unit in self.cache_units:
+        for unit in self.hex_cache:
             if unit.color == color:
                 return unit.surface
+        return None
+
+    def find_doodad_by_type(self, doodad_type : str):
+        for doodad in self.doodad_cache:
+            if doodad.doodad_type == doodad_type:
+                return doodad.surface
         return None
 
     # Add new surface to cache
     def add_hex_color(self, color : tuple[int, int, int]):
         hex_unit = HexCacheUnit(colors.shader_color, self.hex_surface.copy())
         hex_unit.change_color(color)
-        self.cache_units.append(hex_unit)
+        self.hex_cache.append(hex_unit)
         return hex_unit.surface
 
-    # Clear the surface cache
-    def clear_cache_units(self):
-        for unit in self.cache_units:
+    # Clear the hex surface cache
+    def clear_hex_cache(self):
+        for unit in self.hex_cache:
             unit.delete_surface()
-            self.cache_units.remove(unit)
+            self.hex_cache.remove(unit)
             del unit
+
+    # Clear the doodad surface cache
+    def clear_doodad_cache(self):
+        for doodad in self.doodad_cache:
+            doodad.delete_surface()
+            self.doodad_cache.remove(doodad)
+            del doodad
 
     # Draw one tile to the screen
     def draw_tile(self, tile : Hex.Hex, new_color : tuple[int, int, int], chunk_surf : pygame.Surface):
@@ -295,6 +324,16 @@ class GameRenderer:
             temp_hex_surface = self.add_hex_color(new_color)
 
         temp_hex_surface = pygame.transform.scale_by(temp_hex_surface, self.cached_zoom)
+
+        temp_doodad_surface = None
+        # Load tile doodad surface
+        doodad = tile.get_doodad()
+        if doodad:
+            temp_doodad_surface = self.find_doodad_by_type(doodad.get_type())
+
+            if not temp_doodad_surface and doodad.get_name():
+                self.load_doodad_surface(doodad.get_name(), doodad.get_type(), self.cached_zoom)
+                temp_doodad_surface = self.find_doodad_by_type(doodad.get_type())
 
         # Render the hex on the chunk surface
         # Calculate the position of the hex before rendering
@@ -317,6 +356,8 @@ class GameRenderer:
             tile_y += hex_size[1] // 2
 
         chunk_surf.blit(temp_hex_surface, (tile_x, tile_y))
+        if temp_doodad_surface:
+            chunk_surf.blit(temp_doodad_surface, (0, 0))
 
     # Generate all the chunks from the map
     def load_chunks(self, hexmap : HexMap.HexMap):
