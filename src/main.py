@@ -5,13 +5,14 @@ import sys
 
 from collections import deque
 
+import GameHandler
 import HexMap
 import GameRenderer
 import colors
 
 pygame.init()
 
-screen_size = (1000, 600)
+screen_size = (2000, 1200)
 screen = pygame.display.set_mode(screen_size)
 
 pygame.display.set_caption("Hex game")
