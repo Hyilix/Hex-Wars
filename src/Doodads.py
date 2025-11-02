@@ -115,7 +115,7 @@ class Tree(Doodad):
         super().__init__(income = -1)
         self.type = random.randint(1, 2)
 
-    def get_type():
+    def get_type(self):
         return "tree"
 
     def get_name(self):
@@ -126,7 +126,7 @@ class Grave(Doodad):
         super().__init__(income = 0)
         self.type = random.randint(1, 2)
 
-    def get_type():
+    def get_type(self):
         return "grave"
 
     def get_name(self):

@@ -229,9 +229,12 @@ class GameRenderer:
     # Load new doodad surface
     def load_doodad_surface(self, img_name : str, doodad_type : str, scale : float = 1):
         doodad_surface = pygame.image.load(self.texture_path + doodad_type + "s/" + img_name + ".png")
+
+        doodad_surface = pygame.transform.scale(doodad_surface, self.hex_surface_basic_size)
+
         doodad_surface = pygame.transform.scale_by(doodad_surface, scale)
 
-        self.doodad_cache.append(DoodadCacheUnit(doodad_surface, doodad_type))
+        self.doodad_cache.append(DoodadCacheUnit(doodad_surface, img_name))
 
     # Load new background surface
     def load_background_surface(self, scale : int = 1, img_name : str = "Background.png"):
@@ -283,7 +286,7 @@ class GameRenderer:
                 return unit.surface
         return None
 
-    def find_doodad_by_type(self, doodad_type : str):
+    def find_doodad_by_name(self, doodad_type : str):
         for doodad in self.doodad_cache:
             if doodad.doodad_type == doodad_type:
                 return doodad.surface
@@ -325,19 +328,18 @@ class GameRenderer:
 
         temp_hex_surface = pygame.transform.scale_by(temp_hex_surface, self.cached_zoom)
 
-        temp_doodad_surface = None
         # Load tile doodad surface
+        temp_doodad_surface = None
         doodad = tile.get_doodad()
         if doodad:
-            temp_doodad_surface = self.find_doodad_by_type(doodad.get_type())
+            temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
 
             if not temp_doodad_surface and doodad.get_name():
                 self.load_doodad_surface(doodad.get_name(), doodad.get_type(), self.cached_zoom)
-                temp_doodad_surface = self.find_doodad_by_type(doodad.get_type())
+                temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
 
         # Render the hex on the chunk surface
         # Calculate the position of the hex before rendering
-        # hex_size = self.hex_surface_basic_size
         hex_size = (self.hex_surface_basic_size[0] * self.cached_zoom, self.hex_surface_basic_size[1] * self.cached_zoom)
 
         (tile_x, tile_y) = tile.position
@@ -357,7 +359,7 @@ class GameRenderer:
 
         chunk_surf.blit(temp_hex_surface, (tile_x, tile_y))
         if temp_doodad_surface:
-            chunk_surf.blit(temp_doodad_surface, (0, 0))
+            chunk_surf.blit(temp_doodad_surface, (tile_x, tile_y))
 
     # Generate all the chunks from the map
     def load_chunks(self, hexmap : HexMap.HexMap):

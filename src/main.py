@@ -93,7 +93,7 @@ while running:
                 current_tile = test_hex_map.get_tile_at_position(tile_pos)
                 current_tile.set_owner(1)
 
-                test_temp_doodad = Doodads.UnitTier1(1)
+                test_temp_doodad = Doodads.Grave()
                 current_tile.set_doodad(test_temp_doodad)
 
                 renderer.update_chunk(current_tile)
