@@ -3,6 +3,8 @@ from pygame.locals import *
 import Doodads
 import sys
 
+import MapHandling
+
 from collections import deque
 
 import GameHandler
