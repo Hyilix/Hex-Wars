@@ -10,11 +10,12 @@ import GameRenderer
 import button
 import colors
 
-class Editor():
-    def __init__(self, renderer : GameRenderer.GameRenderer, map_size : tuple[int, int] = (0, 0)):
-        self.renderer = renderer
-        self.map_size = map_size
+class Tab_Editor:
+    def __init__(self):
+        pass
 
-    def change_map_size(self, map_size : tuple[int, int]):
-        self.map_size = map_size
+class Editor:
+    def __init__(self, renderer : GameRenderer.GameRenderer, hex_map : HexMap.HexMap):
+        self.renderer = renderer
+        self.hex_map = hex_map
 

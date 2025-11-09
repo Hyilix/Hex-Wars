@@ -43,7 +43,7 @@ renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
 renderer.load_hex_surface("HexTile.png", 1)
 
 # Create and fill a map
-test_hex_map = HexMap.HexMap(300, 300, 0)
+test_hex_map = HexMap.HexMap(30, 20, 0)
 renderer.init_chunks(test_hex_map.dimensions)
 renderer.get_visible_chunks()
 renderer.load_chunks(test_hex_map)
@@ -94,7 +94,7 @@ while running:
                 current_tile = test_hex_map.get_tile_at_position(tile_pos)
                 current_tile.set_owner(1)
 
-                test_temp_doodad = Doodads.Grave()
+                test_temp_doodad = Doodads.UnitTier2(1)
                 current_tile.set_doodad(test_temp_doodad)
 
                 renderer.update_chunk(current_tile)

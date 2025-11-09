@@ -230,10 +230,6 @@ class GameRenderer:
     def load_doodad_surface(self, img_name : str, doodad_type : str, scale : float = 1):
         doodad_surface = pygame.image.load(self.texture_path + doodad_type + "s/" + img_name + ".png")
 
-        doodad_surface = pygame.transform.scale(doodad_surface, self.hex_surface_basic_size)
-
-        doodad_surface = pygame.transform.scale_by(doodad_surface, scale)
-
         self.doodad_cache.append(DoodadCacheUnit(doodad_surface, img_name))
 
     # Load new background surface
@@ -313,6 +309,10 @@ class GameRenderer:
             self.doodad_cache.remove(doodad)
             del doodad
 
+    # Get the length of the hex cache. Useful for determining player count
+    def get_hex_cache_count(self):
+        return len(self.hex_cache)
+
     # Draw one tile to the screen
     def draw_tile(self, tile : Hex.Hex, new_color : tuple[int, int, int], chunk_surf : pygame.Surface):
         # Skip non-existing tiles
@@ -337,6 +337,8 @@ class GameRenderer:
             if not temp_doodad_surface and doodad.get_name():
                 self.load_doodad_surface(doodad.get_name(), doodad.get_type(), self.cached_zoom)
                 temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
+
+            temp_doodad_surface = pygame.transform.scale_by(temp_doodad_surface, self.cached_zoom)
 
         # Render the hex on the chunk surface
         # Calculate the position of the hex before rendering
