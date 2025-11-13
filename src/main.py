@@ -14,7 +14,7 @@ import colors
 
 pygame.init()
 
-screen_size = (2000, 1200)
+screen_size = (1000, 600)
 screen = pygame.display.set_mode(screen_size)
 
 pygame.display.set_caption("Hex game")
@@ -100,6 +100,11 @@ while running:
                 current_tile.set_doodad(test_temp_doodad)
 
                 renderer.update_chunk(current_tile)
+
+        if event.type == pygame.KEYDOWN:
+            # Test map saving
+            if event.key == pygame.key.key_code('k'):
+                print("Save map")
 
     # 3. draw everything
     screen.fill((50, 50, 50))  # background color
