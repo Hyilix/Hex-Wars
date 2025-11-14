@@ -11,8 +11,8 @@ MAX_DUPLICATE_FILE = 1000
 
 # Default map paths
 DEFAULT_MAP_PATH : str = "../maps"
-DEFAULT_GAME_SUFFIX : str = "/game"
-DEFAULT_USER_SUFFIX : str = "/custom"
+DEFAULT_GAME_SUFFIX : str = "/game/"
+DEFAULT_USER_SUFFIX : str = "/custom/"
 DEFAULT_SAVES_PATH : str = "../saves/"
 
 # Map file names
@@ -48,9 +48,11 @@ def __get_hash(map_name : str):
 
 # Make directory for saving a game/map
 def __make_next_dir(new_path : str):
+    dir_path = str(new_path)
+    dir_path = dir_path[:-1]
     # Find the next duplicate in limit
     for i in range(MAX_DUPLICATE_FILE):
-        save_path = str(new_path)
+        save_path = str(dir_path)
         if i > 0:
             save_path += "(" + str(i) + ")"
 
@@ -69,6 +71,7 @@ def __check_valid_save(dir_path : str):
 
 # Save current game
 def save_game(config : dict, save_name : str = None):
+    print(f"Saving game: {save_name}")
     # The name of the map
     map_name = str(config.get("name"))
 
@@ -78,20 +81,22 @@ def save_game(config : dict, save_name : str = None):
     if save_name != None:
         name_to_use = save_name
 
-    new_path = DEFAULT_SAVES_PATH + name_to_use + "/"
+    new_path = DEFAULT_MAP_PATH + DEFAULT_GAME_SUFFIX + name_to_use + "/"
     dir_path = __make_next_dir(new_path)
 
     if (dir_path == None):
         print("No directory file could be created")
         return
 
+    dir_path += "/"
+
     map_hash = __get_hash(map_name)
 
     # Clear the info file before writing new information
-    info_map = open(dir_path + "/" + DEFAULT_INFO_NAME + "/" + DEFAULT_INFO_SUFFIX, 'rb+')
+    if __check_valid_save(dir_path + "/" + DEFAULT_INFO_NAME + "/" + DEFAULT_INFO_SUFFIX):
+        info_map = open(dir_path + "/" + DEFAULT_INFO_NAME + "/" + DEFAULT_INFO_SUFFIX, 'rb+')
 
-    # If file exists, get the hash of the map
-    if (info_map != None):
+        # If file exists, get the hash of the map
         temp_db = pickle.load(info_map)
         map_hash = temp_db['Hash']
         info_map.close()
@@ -121,7 +126,8 @@ def save_game(config : dict, save_name : str = None):
 
 # Load a game
 def load_game(game_name : str):
-    pass
+    print(f"Loading game: {game_name}")
+
 
 # Save current map (map editor)
 def save_map(config : dict):

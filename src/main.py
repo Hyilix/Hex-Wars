@@ -104,7 +104,15 @@ while running:
         if event.type == pygame.KEYDOWN:
             # Test map saving
             if event.key == pygame.key.key_code('k'):
-                print("Save map")
+                MapHandling.save_game({
+                    "Name": "Map Test 1",
+                    "Players": [],
+                    "CurrentPlayer": 0,
+                    "Map": test_hex_map
+                                       }, "test_map_1")
+
+            elif event.key == pygame.key.key_code('l'):
+                config = MapHandling.load_game("test_map_1")
 
     # 3. draw everything
     screen.fill((50, 50, 50))  # background color
