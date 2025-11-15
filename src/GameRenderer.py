@@ -215,6 +215,10 @@ class GameRenderer:
 
     # Reload the renderer when loading a new map
     def reload_renderer(self, map_obj : HexMap.HexMap):
+        if not map_obj:
+            print("No map object, cannot reload renderer")
+            return
+
         self.del_chunks()
         self.current_zoom = 1
         self.cached_zoom = 1
