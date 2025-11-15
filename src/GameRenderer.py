@@ -179,7 +179,7 @@ class HexChunk:
         self.scale_surface(1 / self.chunk_scale)
 
 class GameRenderer:
-    def __init__(self, screen, camera : Camera, color_scheme, zoom_settings : tuple[float, float, float] = (0.2, 6, 0.1)): 
+    def __init__(self, screen, camera : Camera, color_scheme, zoom_settings : tuple[float, float, float] = (0.5, 4, 0.5)): 
         self.chunk_size = DEFAULT_CHUNK_SIZE
 
         # Renderer Camera
