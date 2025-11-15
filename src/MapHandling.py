@@ -62,7 +62,7 @@ def __make_next_dir(new_path : str):
 
     return None
 
-def __check_valid_save(dir_path : str):
+def __check_valid_map(dir_path : str):
     # Check if info.hmap exists, nothing too fancy
     if os.path.exists(dir_path):
         if os.path.exists(dir_path + "/" + DEFAULT_INFO_NAME + DEFAULT_INFO_SUFFIX):
@@ -73,7 +73,7 @@ def __check_valid_save(dir_path : str):
 def save_game(config : dict, save_name : str = None):
     print(f"Saving game: {save_name}")
     # The name of the map
-    map_name = str(config.get("name"))
+    map_name = str(config.get("Name"))
 
     # The save game can be different than the map name, but info.hmap will use map_name
     name_to_use = map_name
@@ -92,9 +92,11 @@ def save_game(config : dict, save_name : str = None):
 
     map_hash = __get_hash(map_name)
 
+    info_file = dir_path + DEFAULT_INFO_NAME + DEFAULT_INFO_SUFFIX
+
     # Clear the info file before writing new information
-    if __check_valid_save(dir_path + "/" + DEFAULT_INFO_NAME + "/" + DEFAULT_INFO_SUFFIX):
-        info_map = open(dir_path + "/" + DEFAULT_INFO_NAME + "/" + DEFAULT_INFO_SUFFIX, 'rb+')
+    if __check_valid_map(info_file):
+        info_map = open(info_file, 'rb+')
 
         # If file exists, get the hash of the map
         temp_db = pickle.load(info_map)
@@ -102,9 +104,9 @@ def save_game(config : dict, save_name : str = None):
         info_map.close()
 
     # Create info.hmap and pickle information into it
-    with open(dir_path + DEFAULT_INFO_NAME + DEFAULT_INFO_SUFFIX, 'ab') as info_map:
+    with open(info_file, 'ab') as info_map:
         # The database to be pickled
-        database = {}
+        database : dict = {}
 
         # Put the hash to the database
         database['Hash'] = map_hash
@@ -113,13 +115,15 @@ def save_game(config : dict, save_name : str = None):
         database['Name'] = map_name
 
         # Put the player array to the database
-        database['Players'] = config.get("player_array")
+        database['Players'] = config.get("Players")
 
         # Put current player to the database
-        database['CurrentPlayer'] = config.get("current_player")
+        database['CurrentPlayer'] = config.get("CurrentPlayer")
 
         # Put map array to the database
-        database['Map'] = config.get("map")
+        database['Map'] = config.get("Map")
+
+        print(f"database when saving: {database}")
 
         # Pickle the database to info_map
         pickle.dump(database, info_map)
@@ -127,6 +131,11 @@ def save_game(config : dict, save_name : str = None):
 # Load a game
 def load_game(game_name : str):
     print(f"Loading game: {game_name}")
+
+    dir_path = DEFAULT_MAP_PATH + DEFAULT_GAME_SUFFIX + game_name + "/"
+    if __check_valid_map(dir_path):
+        with open(dir_path + DEFAULT_INFO_NAME + DEFAULT_INFO_SUFFIX, "rb") as info_file:
+            return pickle.load(info_file)
 
 
 # Save current map (map editor)

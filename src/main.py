@@ -2,6 +2,7 @@ import pygame
 from pygame.locals import *
 import Doodads
 import sys
+import copy
 
 import MapHandling
 
@@ -45,7 +46,7 @@ renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
 renderer.load_hex_surface("HexTile.png", 1)
 
 # Create and fill a map
-test_hex_map = HexMap.HexMap(30, 20, 0)
+test_hex_map = HexMap.HexMap(10, 20, 0)
 renderer.init_chunks(test_hex_map.dimensions)
 renderer.get_visible_chunks()
 renderer.load_chunks(test_hex_map)
@@ -112,7 +113,17 @@ while running:
                                        }, "test_map_1")
 
             elif event.key == pygame.key.key_code('l'):
-                config = MapHandling.load_game("test_map_1")
+                config : dict = MapHandling.load_game("test_map_1")
+
+                test_hex_map = copy.deepcopy(config.get("Map"))
+
+                renderer.reload_renderer(test_hex_map)
+                # renderer.clear_visible_chunks()
+                # renderer.get_visible_chunks()
+                # print(f"Map: {test_hex_map.hexmap[0][0].doodad}")
+
+            elif event.key == pygame.key.key_code('p'):
+                print(f"Map: {test_hex_map.hexmap[0][0].doodad}")
 
     # 3. draw everything
     screen.fill((50, 50, 50))  # background color

@@ -213,6 +213,16 @@ class GameRenderer:
         self.hexmap = None
         self.visible_chunks = [[]]
 
+    # Reload the renderer when loading a new map
+    def reload_renderer(self, map_obj : HexMap.HexMap):
+        self.del_chunks()
+        self.current_zoom = 1
+        self.cached_zoom = 1
+
+        self.init_chunks(map_obj.dimensions)
+        self.get_visible_chunks()
+        self.load_chunks(map_obj)
+
     # Load new hex surface
     def load_hex_surface(self, img_name : str = "HexTile.png", scale : float = 1):
         self.hex_surface = pygame.image.load(self.texture_path + img_name)
@@ -274,6 +284,13 @@ class GameRenderer:
             self.chunks.append([])
             for x in range(chunks_x):
                 self.chunks[y].append(HexChunk(self.hex_surface_basic_size, (x, y)))
+
+    def del_chunks(self):
+        for row in self.chunks:
+            for chunk in row:
+                del chunk
+
+        self.chunks = []
 
     # Search in cache
     def find_hex_by_color(self, color : tuple[int, int, int]):
