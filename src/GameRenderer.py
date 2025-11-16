@@ -68,25 +68,17 @@ class Camera:
         if y_mod == 0:
             y_mod = -1
 
-        # print(f"x_mod = {x_mod}, y_mod = {y_mod}")
-
         if x_mod <= int(x_tile_ref // 4):
-            # print("We need border detection here!!")
-            # print(f"On new border, y_mod = {y_mod}")
             # Check for accurate point at the border of 2 tiles
             (x_corner_1, y_corner_1) = (x_world // int(x_tile_ref * 3 / 4), y_world // int(y_tile_ref))
             (x_corner_1, y_corner_1) = (x_corner_1 * int(x_tile_ref * 3 / 4), y_corner_1 * int(y_tile_ref) + int(y_tile_ref // 2) + (y_mod - 1) * int(y_tile_ref // 2))
             (x_corner_2, y_corner_2) = (x_corner_1 + int(x_tile_ref // 4), y_corner_1 - int(y_tile_ref // 2) + abs(y_mod) * int(y_tile_ref // 2))
-
-            # print(f"Corners: 1 {x_corner_1, y_corner_1} ; 2 {x_corner_2, y_corner_2}")
 
             even_trig = [(x_corner_1, y_corner_1), (x_corner_1, y_corner_1 + int(y_tile_ref)), (x_corner_2, y_corner_2 + abs(y_mod) * int(y_tile_ref // 2))]
             odd_trig = [(x_corner_1, y_corner_1 - (y_mod - 1) * int(y_tile_ref // 2)), (x_corner_2, y_corner_2 - (y_mod + 1) * int(y_tile_ref // 4) - (y_mod - 1) * int(y_tile_ref // 4)), (x_corner_2, y_corner_2 + int(y_tile_ref // 2) - (y_mod - 1) * int(y_tile_ref // 4))]
 
             trig_collision_even = Collisions_2d.point_trig((x_world, y_world), even_trig)
             trig_collision_odd = Collisions_2d.point_trig((x_world, y_world), odd_trig)
-
-            # print(f"Collisions: Odd : {trig_collision_odd}, Even : {trig_collision_even}")
 
             if trig_collision_even:
                 x_tile -= 1
@@ -104,15 +96,11 @@ class Camera:
             (x_corner_1, y_corner_1) = (x_corner_1 * int(x_tile_ref * 3 / 4), y_corner_1 * int(y_tile_ref))
             (x_corner_2, y_corner_2) = (x_corner_1 + int(x_tile_ref / 4), y_corner_1 + y_mod * int(y_tile_ref // 2))
 
-            # print(f"Corners: 1 {x_corner_1, y_corner_1} ; 2 {x_corner_2, y_corner_2}")
-
             even_trig = [(x_corner_1, y_corner_1), (x_corner_1, y_corner_1 + int(y_tile_ref)), (x_corner_2, y_corner_2 - (y_mod - 1) * int(y_tile_ref // 2))]
             odd_trig = [(x_corner_1, y_corner_1 + (y_mod + 1) * int(y_tile_ref // 2)), (x_corner_2, y_corner_2), (x_corner_2, y_corner_2 + int(y_tile_ref))]
 
             trig_collision_even = Collisions_2d.point_trig((x_world, y_world), even_trig)
             trig_collision_odd = Collisions_2d.point_trig((x_world, y_world), odd_trig)
-
-            # print(f"Collisions: Odd : {trig_collision_odd}, Even : {trig_collision_even}")
 
             if trig_collision_odd:
                 x_tile += 1
