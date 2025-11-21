@@ -1,4 +1,5 @@
 import pygame
+from enum import Enum
 
 import Doodads
 import HexMap
@@ -11,14 +12,26 @@ import Collisions_2d
 import button
 import colors
 
+import ActionHandler
+
+# Enum class for representing current tab opened
+class TabMenu(Enum):
+    WORLD = 10
+    ECONOMY = 11
+    SETTINS = 12
+
 # Tab super class for all the editor's tabs
 class Tab:
-    def __init__(self, position : tuple[int, int], size : tuple[int, int]):
+    def __init__(self, position : tuple[int, int], size : tuple[int, int], background_color : tuple[int, int, int, int]):
         self.__pos = position
         self.__size = size
 
         self.__is_clicked_inside = False
         self.__buttons : list[button.Button] = []
+        self.__background_color = background_color
+
+        self.__color_surface : pygame.Surface
+        self.create_color_surface()
 
     # Get is_clicked_inside state
     def get_clicked_inside(self):
@@ -41,12 +54,35 @@ class Tab:
     # Spread the buttons evenly on the tab, having equal distance between them on the x-axis
     def spread_buttons(self, buttons_per_row : int):
         no_buttons = len(self.__buttons)
-        button_distance = (self.__size[0] // buttons_per_row, 10)
+        y_offset = 10
+        button_distance = (self.__buttons[0].__size[0] // buttons_per_row, y_offset)
+
+        y_size = self.__buttons[0].__size[1] + y_offset
 
         # Set button position
+        x = 0
         for button in self.__buttons:
-            for x in range(buttons_per_row):
-                pass
+            button.change_pos((x * button_distance[0], (button.__size[1] % y_size) * y_size))
+
+            # Increment x
+            x += 1
+            if x == buttons_per_row:
+                x = 0
+
+    def change_background_color(self, new_color : tuple[int, int, int, int]):
+        self.__background_color = new_color
+
+    # Create the background color surface
+    def create_color_surface(self):
+        self.__color_surface = pygame.Surface(self.__size, pygame.SRCALPHA)
+        self.__color_surface.fill(self.__background_color)
+
+    # Draw the tab background to the screen
+    def draw_background_color(self, screen):
+        if not self.__background_color:
+            self.create_color_surface()
+
+        screen.blit(self.__background_color, self.__pos)
 
 # The main editor class
 class Editor:
@@ -65,6 +101,10 @@ class Editor:
                 "CurrentPlayer": self.__current_player,
                 "Map": self.__hex_map
                 }
+
+        # True -> action is focused on the Map
+        # False -> action is focused on the tabs
+        self.__map_focus = True
 
     # Load a game and save the game configuration
     def load_game(self, game_name : str):
