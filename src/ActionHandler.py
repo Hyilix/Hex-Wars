@@ -53,7 +53,7 @@ class History:
     def __deep_clear_queue(self, queue):
         for elem in queue:
             del elem
-            queue.pop()
+        queue.clear()
 
     def add_action_list(self, action : ActionList):
         self.__history.append(action)

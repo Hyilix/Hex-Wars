@@ -129,7 +129,7 @@ class Brush:
                     action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(tile.doodad), copy.deepcopy(self.__doodad), 'doodad', tile))
                     # tile.doodad = copy.deepcopy(self.__doodad)
 
-        return (tiles, action_list)
+        return action_list
 
 # The main editor class
 class Editor:
@@ -169,13 +169,9 @@ class Editor:
 
     def apply_brush(self, start_hex : Hex.Hex):
         print("Editor applied brush")
-        tiles, action_list = self.brush.apply_brush(self.__hex_map, start_hex)
+        action_list = self.brush.apply_brush(self.__hex_map, start_hex)
 
         self.action_handler.add_action_list(action_list)
 
-        # Updating every tile like this is surely inefficient. But it will have to do for now
         self.__renderer.load_chunks(self.__hex_map)
-        # for tile in tiles:
-        #     self.__renderer.update_chunk(tile)
-
 
