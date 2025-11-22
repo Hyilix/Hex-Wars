@@ -430,9 +430,9 @@ class GameRenderer:
         # print(f"camera index = {pos_1_x} , {pos_1_y} ; {pos_2_x} , {pos_2_y}")
 
         # Clamp the positions to map size
-        pos_1_x = clamp(pos_1_x, 0, max_pos[0])
+        pos_1_x = clamp(pos_1_x - 1, 0, max_pos[0])
         pos_2_x = clamp(pos_2_x, 0, max_pos[0])
-        pos_1_y = clamp(pos_1_y, 0, max_pos[1])
+        pos_1_y = clamp(pos_1_y - 1, 0, max_pos[1])
         pos_2_y = clamp(pos_2_y, 0, max_pos[1])
 
         index = 0
@@ -522,7 +522,8 @@ class GameRenderer:
         (x_tile, y_tile) = tile.position
         chunk_surface = self.chunks[y_tile // self.chunk_size[1]][x_tile // self.chunk_size[0]].chunk_surface
         color = self.color_scheme[tile.owner]
-        self.draw_tile(tile, color, chunk_surface)
+        if chunk_surface:
+            self.draw_tile(tile, color, chunk_surface)
 
     # Draw all chunks to screen
     def draw_chunks(self):

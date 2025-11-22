@@ -45,6 +45,14 @@ class Hex:
     def get_central_hex_status(self):
         return self.is_central_hex
 
+    def is_hex_identical(self, tile):
+        if self.owner == tile.owner:
+            if (self.doodad and tile.doodad):
+                if self.doodad == None or self.doodad.type == tile.doodad.type:
+                    return True
+
+        return False
+
 # Index of each neighbour
 #            _____
 #           /     \

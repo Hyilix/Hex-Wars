@@ -1,5 +1,6 @@
 from Hex import Hex
 import random
+from collections import deque
 
 class HexMap:
     def __init__(self, x_tile_count : int, y_tile_count : int, default_owner : int = -1):
@@ -50,16 +51,20 @@ class HexMap:
             tile_pos_y -= 1
         elif index == 1:
             tile_pos_x += 1
+            tile_pos_y -= (tile_pos_x % 2)
         elif index == 2:
             tile_pos_x += 1
             tile_pos_y += 1
+            tile_pos_y -= (tile_pos_x % 2)
         elif index == 3:
             tile_pos_y += 1
         elif index == 4:
             tile_pos_y += 1
             tile_pos_x -= 1
+            tile_pos_y -= (tile_pos_x % 2)
         elif index == 5:
             tile_pos_x -= 1
+            tile_pos_y -= (tile_pos_x % 2)
 
         return self.get_hex_from_pos(tile_pos_x, tile_pos_y)
 
@@ -69,6 +74,28 @@ class HexMap:
         for index in range(6):
             neighbors.append(self.get_hex_neighbor(tile, index))
         return neighbors
+
+    def __bfs_up_to_level(self, start, max_level):
+        visited = [start]
+        queue = deque([(start, 0)])
+        
+        while queue:
+            tile, level = queue.popleft()
+            if level < max_level or max_level == -1:
+                for neighbour in self.get_hex_all_neighbors(tile):
+                    if neighbour and neighbour not in visited:
+                        visited.append(neighbour)
+                        queue.append((neighbour, level + 1))
+
+        return visited
+
+    def get_identical_neighboring_hexes(self, tile : Hex):
+        # It's super slow to fill all of these up. Maybe BFS isn't the smartest solution, but it will have to do for now
+        return self.__bfs_up_to_level(tile, 30)
+
+    def get_neighbors_at_level(self, tile : Hex, levels : int):
+        return self.__bfs_up_to_level(tile, levels - 1)
+
 
     # TODO: add unit movement (or get the hexes that a unit can move to)
 

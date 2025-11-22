@@ -13,6 +13,8 @@ import HexMap
 import GameRenderer
 import colors
 
+import Editor
+
 pygame.init()
 
 screen_size = (1000, 600)
@@ -46,10 +48,12 @@ renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
 renderer.load_hex_surface("HexTile.png", 1)
 
 # Create and fill a map
-test_hex_map = HexMap.HexMap(10, 20, 0)
+test_hex_map = HexMap.HexMap(30, 30, 0)
 renderer.init_chunks(test_hex_map.dimensions)
 renderer.get_visible_chunks()
 renderer.load_chunks(test_hex_map)
+
+test_editor = Editor.Editor(renderer, test_hex_map)
 
 FPS = 144
 
@@ -95,12 +99,14 @@ while running:
 
                 tile_pos = camera_test.get_tile_at_position(mouse_pos)
                 current_tile = test_hex_map.get_tile_at_position(tile_pos)
-                current_tile.set_owner(1)
+                # current_tile.set_owner(1)
 
-                test_temp_doodad = Doodads.UnitTier2(1)
-                current_tile.set_doodad(test_temp_doodad)
+                # test_temp_doodad = Doodads.UnitTier2(1)
+                # current_tile.set_doodad(test_temp_doodad)
+                #
+                # renderer.update_chunk(current_tile)
 
-                renderer.update_chunk(current_tile)
+                test_editor.apply_brush(current_tile)
 
         if event.type == pygame.KEYDOWN:
             # Test map saving
@@ -122,6 +128,16 @@ while running:
                 # renderer.clear_visible_chunks()
                 # renderer.get_visible_chunks()
                 # print(f"Map: {test_hex_map.hexmap[0][0].doodad}")
+
+            elif event.key == pygame.key.key_code('z'):
+                print("Undo")
+                test_editor.action_handler.undo_action_last()
+                renderer.load_chunks(test_hex_map)
+
+            elif event.key == pygame.key.key_code('y'):
+                print("Redo")
+                test_editor.action_handler.redo_last_action()
+                renderer.load_chunks(test_hex_map)
 
     # 3. draw everything
     screen.fill((50, 50, 50))  # background color

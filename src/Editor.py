@@ -1,6 +1,8 @@
 import pygame
 from enum import Enum
 
+import copy
+
 import Doodads
 import HexMap
 import Hex
@@ -84,10 +86,55 @@ class Tab:
 
         screen.blit(self.__background_color, self.__pos)
 
+class Brush:
+    def __init__(self, size : int, fill : bool, owner : int, doodad : Doodads.Doodad):
+        self.__size = size
+        self.__fill = fill
+        self.__owner = owner
+        self.__doodad = doodad
+
+    def change_size(self, size : int):
+        self.__size = size
+
+    def change_fill(self, fill : bool):
+        self.__fill = fill
+
+    def change_owner(self, owner : int):
+        self.__owner = owner
+
+    def change_doodad(self, doodad : Doodads.Doodad):
+        self.__doodad = doodad
+
+    def apply_brush(self, hex_map : HexMap.HexMap, start_hex : Hex.Hex):
+        # Get all the tiles that need to be modified
+        action_list = ActionHandler.ActionList([])
+        if self.__fill == True:
+            tiles = hex_map.get_identical_neighboring_hexes(start_hex)
+        else:
+            tiles = hex_map.get_neighbors_at_level(start_hex, self.__size)
+
+        for tile in tiles:
+            # Set new owner
+            if tile.owner != self.__owner:
+                action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, tile.owner, self.__owner, 'owner', tile))
+                # tile.owner = self.__owner
+
+            # Set new doodad
+            if self.__owner >= 0:
+                if tile.doodad != self.__doodad:
+                    if tile.doodad:
+                        del tile.doodad
+                        tile.doodad = None
+
+                    action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(tile.doodad), copy.deepcopy(self.__doodad), 'doodad', tile))
+                    # tile.doodad = copy.deepcopy(self.__doodad)
+
+        return (tiles, action_list)
+
 # The main editor class
 class Editor:
     def __init__(self, renderer : GameRenderer.GameRenderer, hex_map : HexMap.HexMap):
-        self.__renderer = renderer
+        self.__renderer : GameRenderer.GameRenderer = renderer
         self.__hex_map = hex_map
 
         self.__map_name = "New Map"
@@ -106,6 +153,10 @@ class Editor:
         # False -> action is focused on the tabs
         self.__map_focus = True
 
+        self.action_handler = ActionHandler.History()
+
+        self.brush = Brush(4, False, 3, Doodads.UnitTier1(3))
+
     # Load a game and save the game configuration
     def load_game(self, game_name : str):
         config = MapHandling.load_game(game_name)
@@ -115,5 +166,16 @@ class Editor:
     # Save the current game
     def save_game(self, game_name : str):
         MapHandling.save_game(self.__config, game_name)
+
+    def apply_brush(self, start_hex : Hex.Hex):
+        print("Editor applied brush")
+        tiles, action_list = self.brush.apply_brush(self.__hex_map, start_hex)
+
+        self.action_handler.add_action_list(action_list)
+
+        # Updating every tile like this is surely inefficient. But it will have to do for now
+        self.__renderer.load_chunks(self.__hex_map)
+        # for tile in tiles:
+        #     self.__renderer.update_chunk(tile)
 
 
