@@ -15,6 +15,8 @@ import button
 import colors
 
 import ActionHandler
+import KeyboardState
+import InfoTabs
 
 # Enum class for representing current tab opened
 class TabMenu(Enum):
@@ -84,7 +86,7 @@ class Tab:
         if not self.__background_color:
             self.create_color_surface()
 
-        screen.blit(self.__background_color, self.__pos)
+        screen.blit(self.__color_surface, self.__pos)
 
 class Brush:
     def __init__(self, size : int, fill : bool, owner : int, doodad : Doodads.Doodad):
@@ -116,16 +118,13 @@ class Brush:
         for tile in tiles:
             # Set new owner
             if tile.owner != self.__owner:
+                # print("Add owner action")
                 action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, tile.owner, self.__owner, 'owner', tile))
                 # tile.owner = self.__owner
 
             # Set new doodad
             if self.__owner >= 0:
-                if tile.doodad != self.__doodad:
-                    if tile.doodad:
-                        del tile.doodad
-                        tile.doodad = None
-
+                if tile.doodad == None or tile.doodad.get_name() != self.__doodad.get_name():
                     action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(tile.doodad), copy.deepcopy(self.__doodad), 'doodad', tile))
                     # tile.doodad = copy.deepcopy(self.__doodad)
 
@@ -133,13 +132,15 @@ class Brush:
 
 # The main editor class
 class Editor:
-    def __init__(self, renderer : GameRenderer.GameRenderer, hex_map : HexMap.HexMap):
+    def __init__(self, renderer : GameRenderer.GameRenderer, hex_map : HexMap.HexMap, screen_size : tuple[int, int]):
         self.__renderer : GameRenderer.GameRenderer = renderer
         self.__hex_map = hex_map
 
         self.__map_name = "New Map"
         self.__players = []
         self.__current_player = 0
+
+        self.__screen_size = screen_size
 
         self.__config = {
                 "Hash": 0,
@@ -152,10 +153,18 @@ class Editor:
         # True -> action is focused on the Map
         # False -> action is focused on the tabs
         self.__map_focus = True
+        self.__tabs_visible = True
 
         self.action_handler = ActionHandler.History()
 
-        self.brush = Brush(4, False, 3, Doodads.UnitTier1(3))
+        self.brush = Brush(2, False, 3, Doodads.Tree())
+
+        self.__active_tab = TabMenu.WORLD
+
+        self.worldtab = Tab((3 * screen_size[0] // 4, 0), ((screen_size[0] // 4, screen_size[1])), colors.tab_color)
+        self.utiltab = Tab((0, 0), (screen_size[0] // 4, screen_size[1]), colors.tab_color)
+
+        self.test_info = InfoTabs.InfoTab(False, (screen_size[0] // 12, 11 * screen_size[1] // 12))
 
     # Load a game and save the game configuration
     def load_game(self, game_name : str):
@@ -174,4 +183,59 @@ class Editor:
         self.action_handler.add_action_list(action_list)
 
         self.__renderer.load_chunks(self.__hex_map)
+
+    def render_tabs(self, screen):
+        if self.__tabs_visible:
+            if self.__active_tab == TabMenu.WORLD:
+                self.worldtab.draw_background_color(screen)
+
+            self.utiltab.draw_background_color(screen)
+
+    def handle_mouse_action(self, mouse_pos : tuple[int, int], tile):
+        first_collision = self.utiltab.click_action(mouse_pos)
+        second_collision = self.worldtab.click_action(mouse_pos)
+
+        if first_collision or second_collision:
+            if self.__tabs_visible:
+                self.__map_focus = False
+        else:
+            self.__map_focus = True
+
+        if self.__map_focus == True:
+            self.apply_brush(tile)
+
+        self.utiltab.clear_clicked_inside()
+        self.worldtab.clear_clicked_inside()
+
+    def handle_keyboard_action(self, screen):
+        keyboardstate = KeyboardState.KeyboardState()
+
+        if keyboardstate.is_ctrl_hold:
+            key_pressed = keyboardstate.key_pressed
+            key_down = keyboardstate.key_is_down
+
+            if key_down == True:
+                # Action handler
+                if key_pressed == pygame.K_z:
+                    self.__handle_action_handler(True)
+                elif key_pressed == pygame.K_y:
+                    self.__handle_action_handler(False)
+
+                # Tab handler
+                if key_pressed == pygame.K_v:
+                    self.__switch_tab_visility()
+
+                if key_pressed == pygame.K_h:
+                    self.test_info.render_text("Hello", screen)
+
+    # Local functions
+    def __handle_action_handler(self, to_undo : bool):
+        if to_undo:
+            self.action_handler.undo_action_last()
+        else:
+            self.action_handler.redo_last_action()
+        self.__renderer.load_chunks(self.__hex_map)
+
+    def __switch_tab_visility(self):
+        self.__tabs_visible = not self.__tabs_visible
 

@@ -18,7 +18,7 @@ DEFAULT_TEXTURE_PATH : str = "../assets/textures/"
 DEFAULT_CHUNK_SIZE = (8, 8)
 
 # The zoom values to cache chunk resize
-CHUNK_ZOOM_CACHE = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
+CHUNK_ZOOM_CACHE = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0, 1.5, 2.0, 2.5, 3.0]
 
 class Camera:
     def __init__(self, size : tuple[int, int], position : tuple[int, int], zoom : int):
@@ -230,6 +230,7 @@ class GameRenderer:
 
     # Load new doodad surface
     def load_doodad_surface(self, img_name : str, doodad_type : str, scale : float = 1):
+        print(f"load surface : {img_name}")
         doodad_surface = pygame.image.load(self.texture_path + doodad_type + "s/" + img_name + ".png")
 
         self.doodad_cache.append(DoodadCacheUnit(doodad_surface, img_name))

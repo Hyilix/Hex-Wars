@@ -1,4 +1,5 @@
 import random
+
 """ Base Classes """
 class Doodad:
     def __init__(self, income : int):

@@ -34,7 +34,7 @@ class Button:
     def check_mouse_collision(self, mouse_pos : tuple[int, int]):
         return Collisions_2d.point_rect(mouse_pos, self.__pos, self.__size)
 
-# Button made from 2 rectangles
+# Button made from 2 rectangle
 class SimpleButton(Button):
     def __init__(self, pos : tuple[int, int], size : tuple[int, int], func = None):
         super().__init__(pos, size, func)
@@ -54,9 +54,6 @@ class TextureButton(Button):
     def __init__(self, pos : tuple[int, int], size : tuple[int, int], func = None):
         super().__init__(pos, size, func)
 
-        # Information about button highlight
-        self.__highlight_color = colors.white
-        self.__highlight_alpha = 200
         self.__is_highlighted = False
 
         # Information about button texture (including highlight)
