@@ -118,15 +118,12 @@ class Brush:
         for tile in tiles:
             # Set new owner
             if tile.owner != self.__owner:
-                # print("Add owner action")
                 action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, tile.owner, self.__owner, 'owner', tile))
-                # tile.owner = self.__owner
 
             # Set new doodad
             if self.__owner >= 0:
                 if tile.doodad == None or tile.doodad.get_name() != self.__doodad.get_name():
                     action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(tile.doodad), copy.deepcopy(self.__doodad), 'doodad', tile))
-                    # tile.doodad = copy.deepcopy(self.__doodad)
 
         return action_list
 
@@ -164,7 +161,7 @@ class Editor:
         self.worldtab = Tab((3 * screen_size[0] // 4, 0), ((screen_size[0] // 4, screen_size[1])), colors.tab_color)
         self.utiltab = Tab((0, 0), (screen_size[0] // 4, screen_size[1]), colors.tab_color)
 
-        self.test_info = InfoTabs.InfoTab(False, (screen_size[0] // 12, 11 * screen_size[1] // 12))
+        self.test_info = InfoTabs.InfoTab(False, 4.0, (screen_size[0] // 12, 11 * screen_size[1] // 12))
 
     # Load a game and save the game configuration
     def load_game(self, game_name : str):
@@ -195,9 +192,8 @@ class Editor:
         first_collision = self.utiltab.click_action(mouse_pos)
         second_collision = self.worldtab.click_action(mouse_pos)
 
-        if first_collision or second_collision:
-            if self.__tabs_visible:
-                self.__map_focus = False
+        if (first_collision or second_collision) and self.__tabs_visible:
+            self.__map_focus = False
         else:
             self.__map_focus = True
 
