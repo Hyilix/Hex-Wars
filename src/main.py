@@ -5,6 +5,7 @@ import sys
 import copy
 
 import MapHandling
+import KeyboardState
 
 from collections import deque
 
@@ -12,6 +13,9 @@ import GameHandler
 import HexMap
 import GameRenderer
 import colors
+
+import Events
+import Editor
 
 pygame.init()
 
@@ -46,91 +50,138 @@ renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
 renderer.load_hex_surface("HexTile.png", 1)
 
 # Create and fill a map
-test_hex_map = HexMap.HexMap(10, 20, 0)
+test_hex_map = HexMap.HexMap(30, 30, 0)
 renderer.init_chunks(test_hex_map.dimensions)
 renderer.get_visible_chunks()
 renderer.load_chunks(test_hex_map)
+
+test_editor = Editor.Editor(renderer, test_hex_map, screen_size)
 
 FPS = 144
 
 running = True
 while running:
-    # 1. handle events
+    screen.fill(renderer.background_color)  # background color
+    renderer.draw_chunks()
+    test_editor.render_tabs(screen)
+    keyboard_handled_this_frame = False
+
     for event in pygame.event.get():
         if event.type == pygame.MOUSEMOTION:
-            new_coord = pygame.mouse.get_pos()
+            if test_editor.is_blocked() == False:
+                new_coord = pygame.mouse.get_pos()
 
-            # Pan the camera
-            if camera_test.panning_mode == True:
-                win_size = pygame.display.get_window_size()
-                (x_dir, y_dir) = (new_coord[0] - camera_test.pan_pivot[0], new_coord[1] - camera_test.pan_pivot[1])
-                camera_test.add_direction((x_dir, y_dir))
-                renderer.get_visible_chunks()
+                # Pan the camera
+                if camera_test.panning_mode == True:
+                    win_size = pygame.display.get_window_size()
+                    (x_dir, y_dir) = (new_coord[0] - camera_test.pan_pivot[0], new_coord[1] - camera_test.pan_pivot[1])
+                    camera_test.add_direction((x_dir, y_dir))
+                    renderer.get_visible_chunks()
 
         if event.type == pygame.QUIT:
             running = False
+
         elif event.type == pygame.MOUSEBUTTONDOWN:
-            # if quit_button1.collidepoint(event.pos):
-            #     pygame.quit()
-            #     sys.exit()
             # Camera panning on R_CLICK
             if event.button == 3:
                 camera_test.pan_pivot = pygame.mouse.get_pos()
                 camera_test.panning_mode = True
+
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 3:
                 camera_test.panning_mode = False
-    #2. update game logic
-    # (e.g. move player, check collisions)
 
         elif event.type == pygame.MOUSEWHEEL:
             renderer.set_zoom(round(event.y, 1) * renderer.zoom_settings[2] + renderer.current_zoom)
 
+        keyboard_state = KeyboardState.KeyboardState()
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
+                keyboard_state.parse_mouse_state(1, True)
                 mouse_pos = event.pos
-                print(f"Mouse clicked at: {mouse_pos}")
-                if quit_button1.collidepoint(event.pos):
-                    print("Button clicked!")
 
                 tile_pos = camera_test.get_tile_at_position(mouse_pos)
-                current_tile = test_hex_map.get_tile_at_position(tile_pos)
-                current_tile.set_owner(1)
+                # Check if tile is within bounds
+                if (tile_pos[0] >= 0 and tile_pos[0] < test_hex_map.dimensions[0] and
+                    tile_pos[1] >= 0 and tile_pos[1] < test_hex_map.dimensions[1]):
+                    current_tile = test_hex_map.get_tile_at_position(tile_pos)
+                    test_editor.handle_mouse_action(mouse_pos, current_tile, True)
+                else:
+                    test_editor.handle_mouse_action(mouse_pos, None, True)
 
-                test_temp_doodad = Doodads.UnitTier2(1)
-                current_tile.set_doodad(test_temp_doodad)
+            if event.button == 2:
+                keyboard_state.parse_mouse_state(2, True)
 
-                renderer.update_chunk(current_tile)
+        if event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                keyboard_state.parse_mouse_state(1, False)
+
+            if event.button == 2:
+                keyboard_state.parse_mouse_state(2, False)
+
+        if event.type == pygame.MOUSEMOTION:
+            if keyboard_state.is_mouse1_down:
+                mouse_pos = event.pos
+
+                tile_pos = camera_test.get_tile_at_position(mouse_pos)
+                # Check if tile is within bounds
+                if tile_pos[0] >= 0 and tile_pos[0] < test_hex_map.dimensions[0]:
+                    if tile_pos[1] >= 0 and tile_pos[1] < test_hex_map.dimensions[1]:
+                        current_tile = test_hex_map.get_tile_at_position(tile_pos)
+                        test_editor.handle_mouse_action(mouse_pos, current_tile)
 
         if event.type == pygame.KEYDOWN:
-            # Test map saving
-            if event.key == pygame.key.key_code('k'):
-                MapHandling.save_game({
-                    "Name": "Map Test 1",
-                    "Players": [],
-                    "CurrentPlayer": 0,
-                    "Map": test_hex_map
-                                       }, "test_map_1")
+            keyboard_state.parse_key_input(event.key, event.unicode, True)
 
-            # Test map loading
-            elif event.key == pygame.key.key_code('l'):
-                config : dict = MapHandling.load_game("test_map_1")
+        if event.type == pygame.KEYUP:
+            keyboard_state.parse_key_input(event.key, event.unicode, False)
 
-                test_hex_map = copy.deepcopy(config.get("Map"))
+        if event.type == Events.KEYBOARD_CHANGED:
+            if not keyboard_handled_this_frame:
+                # Editor handle the keyboard
+                test_editor.handle_keyboard_action(screen)
 
-                renderer.reload_renderer(test_hex_map)
-                # renderer.clear_visible_chunks()
-                # renderer.get_visible_chunks()
-                # print(f"Map: {test_hex_map.hexmap[0][0].doodad}")
+                keyboard_handled_this_frame = True
 
-    # 3. draw everything
-    screen.fill((50, 50, 50))  # background color
-    # draw_button()
-    renderer.draw_chunks()
-    pygame.display.flip()      # update display
+        if event.type == Events.MAP_CHANGED:
+            test_hex_map = test_editor.get_editor_map()
 
-    clock.tick(FPS)  # limit to 60 frames per second
+    # Update display
+    pygame.display.flip()
+
+    clock.tick(FPS)  # limit to FPS frames per second
     pygame.display.set_caption("Hex Game FPS: " + str(round(clock.get_fps(), 1)))
-    # print(f"Current FPS = {clock.get_fps()}")
 
 pygame.quit()
+
+        # if event.type == pygame.KEYDOWN:
+        #     # Test map saving
+        #     if event.key == pygame.key.key_code('k'):
+        #         MapHandling.save_game({
+        #             "Name": "Map Test 1",
+        #             "Players": [],
+        #             "CurrentPlayer": 0,
+        #             "Map": test_hex_map
+        #                                }, "test_map_1")
+        #
+        #     # Test map loading
+        #     elif event.key == pygame.key.key_code('l'):
+        #         config : dict = MapHandling.load_game("test_map_1")
+        #
+        #         test_hex_map = copy.deepcopy(config.get("Map"))
+        #
+        #         renderer.reload_renderer(test_hex_map)
+        #         # renderer.clear_visible_chunks()
+        #         # renderer.get_visible_chunks()
+        #         # print(f"Map: {test_hex_map.hexmap[0][0].doodad}")
+        #
+        #     elif event.key == pygame.key.key_code('z'):
+        #         print("Undo")
+        #         test_editor.action_handler.undo_action_last()
+        #         renderer.load_chunks(test_hex_map)
+        #
+        #     elif event.key == pygame.key.key_code('y'):
+        #         print("Redo")
+        #         test_editor.action_handler.redo_last_action()
+        #         renderer.load_chunks(test_hex_map)

@@ -18,7 +18,7 @@ DEFAULT_TEXTURE_PATH : str = "../assets/textures/"
 DEFAULT_CHUNK_SIZE = (8, 8)
 
 # The zoom values to cache chunk resize
-CHUNK_ZOOM_CACHE = [0.5, 1.0, 1.5, 2.0, 2.5, 3.0, 3.5, 4.0]
+CHUNK_ZOOM_CACHE = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0, 1.5, 2.0, 2.5, 3.0]
 
 class Camera:
     def __init__(self, size : tuple[int, int], position : tuple[int, int], zoom : int):
@@ -68,25 +68,17 @@ class Camera:
         if y_mod == 0:
             y_mod = -1
 
-        # print(f"x_mod = {x_mod}, y_mod = {y_mod}")
-
         if x_mod <= int(x_tile_ref // 4):
-            # print("We need border detection here!!")
-            # print(f"On new border, y_mod = {y_mod}")
             # Check for accurate point at the border of 2 tiles
             (x_corner_1, y_corner_1) = (x_world // int(x_tile_ref * 3 / 4), y_world // int(y_tile_ref))
             (x_corner_1, y_corner_1) = (x_corner_1 * int(x_tile_ref * 3 / 4), y_corner_1 * int(y_tile_ref) + int(y_tile_ref // 2) + (y_mod - 1) * int(y_tile_ref // 2))
             (x_corner_2, y_corner_2) = (x_corner_1 + int(x_tile_ref // 4), y_corner_1 - int(y_tile_ref // 2) + abs(y_mod) * int(y_tile_ref // 2))
-
-            # print(f"Corners: 1 {x_corner_1, y_corner_1} ; 2 {x_corner_2, y_corner_2}")
 
             even_trig = [(x_corner_1, y_corner_1), (x_corner_1, y_corner_1 + int(y_tile_ref)), (x_corner_2, y_corner_2 + abs(y_mod) * int(y_tile_ref // 2))]
             odd_trig = [(x_corner_1, y_corner_1 - (y_mod - 1) * int(y_tile_ref // 2)), (x_corner_2, y_corner_2 - (y_mod + 1) * int(y_tile_ref // 4) - (y_mod - 1) * int(y_tile_ref // 4)), (x_corner_2, y_corner_2 + int(y_tile_ref // 2) - (y_mod - 1) * int(y_tile_ref // 4))]
 
             trig_collision_even = Collisions_2d.point_trig((x_world, y_world), even_trig)
             trig_collision_odd = Collisions_2d.point_trig((x_world, y_world), odd_trig)
-
-            # print(f"Collisions: Odd : {trig_collision_odd}, Even : {trig_collision_even}")
 
             if trig_collision_even:
                 x_tile -= 1
@@ -104,15 +96,11 @@ class Camera:
             (x_corner_1, y_corner_1) = (x_corner_1 * int(x_tile_ref * 3 / 4), y_corner_1 * int(y_tile_ref))
             (x_corner_2, y_corner_2) = (x_corner_1 + int(x_tile_ref / 4), y_corner_1 + y_mod * int(y_tile_ref // 2))
 
-            # print(f"Corners: 1 {x_corner_1, y_corner_1} ; 2 {x_corner_2, y_corner_2}")
-
             even_trig = [(x_corner_1, y_corner_1), (x_corner_1, y_corner_1 + int(y_tile_ref)), (x_corner_2, y_corner_2 - (y_mod - 1) * int(y_tile_ref // 2))]
             odd_trig = [(x_corner_1, y_corner_1 + (y_mod + 1) * int(y_tile_ref // 2)), (x_corner_2, y_corner_2), (x_corner_2, y_corner_2 + int(y_tile_ref))]
 
             trig_collision_even = Collisions_2d.point_trig((x_world, y_world), even_trig)
             trig_collision_odd = Collisions_2d.point_trig((x_world, y_world), odd_trig)
-
-            # print(f"Collisions: Odd : {trig_collision_odd}, Even : {trig_collision_even}")
 
             if trig_collision_odd:
                 x_tile += 1
@@ -167,7 +155,7 @@ class HexChunk:
     # Scale surface to preferred scale
     def scale_surface(self, scale : float):
         scale = round(scale, 1)
-        print(scale)
+        # print(scale)
         if scale in CHUNK_ZOOM_CACHE:
             new_size = (self.surface_size[0] * scale, self.surface_size[1] * scale)
 
@@ -208,7 +196,10 @@ class GameRenderer:
         self.chunks : list[list[HexChunk]] = []
 
         # Background Info
-        self.background_surface = pygame.Surface
+        self.background_surface = None
+
+        # Background color
+        self.background_color = colors.gray_very_dark
 
         self.hexmap = None
         self.visible_chunks = [[]]
@@ -216,7 +207,7 @@ class GameRenderer:
     # Reload the renderer when loading a new map
     def reload_renderer(self, map_obj : HexMap.HexMap):
         if not map_obj:
-            print("No map object, cannot reload renderer")
+            # print("No map object, cannot reload renderer")
             return
 
         self.del_chunks()
@@ -246,6 +237,9 @@ class GameRenderer:
 
         self.doodad_cache.append(DoodadCacheUnit(doodad_surface, img_name))
 
+    def change_background_color(self, color : tuple[int, int, int]):
+        self.background_color = color
+
     # Load new background surface
     def load_background_surface(self, scale : int = 1, img_name : str = "Background.png"):
         self.background_surface = pygame.image.load(self.texture_path + img_name)
@@ -257,10 +251,10 @@ class GameRenderer:
         new_zoom = clamp(new_zoom, self.zoom_settings[0], self.zoom_settings[1])
         self.current_zoom = new_zoom
 
-        print(f"New zoom = {new_zoom}")
+        # print(f"New zoom = {new_zoom}")
 
         if new_zoom in CHUNK_ZOOM_CACHE:
-            print("Poof, new zoom chunks")
+            # print("Poof, new zoom chunks")
             self.cached_zoom = new_zoom
 
             # Clear doodad cache
@@ -281,7 +275,7 @@ class GameRenderer:
         if map_dimensions[1] % self.chunk_size[1]:
             chunks_y += 1
 
-        print("chunks:", chunks_x, chunks_y)
+        # print("chunks:", chunks_x, chunks_y)
 
         # Create the chunks
         for y in range(chunks_y):
@@ -337,7 +331,7 @@ class GameRenderer:
     # Draw one tile to the screen
     def draw_tile(self, tile : Hex.Hex, new_color : tuple[int, int, int], chunk_surf : pygame.Surface):
         # Skip non-existing tiles
-        if not tile or tile.owner == -1:
+        if not tile:
             return
 
         # Change the inner color of the tile
@@ -349,17 +343,29 @@ class GameRenderer:
 
         temp_hex_surface = pygame.transform.scale_by(temp_hex_surface, self.cached_zoom)
 
-        # Load tile doodad surface
-        temp_doodad_surface = None
-        doodad = tile.get_doodad()
-        if doodad:
-            temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
+        # Draw the lack of tile
+        if tile.owner == -1:
+            temp_hex_surface = temp_hex_surface.copy()
+            # If a background is loaded, use that
+            if self.background_surface:
+                temp_hex_surface.blit(self.background_surface, (0, 0), area=None, special_flags=pygame.BLEND_RGBA_MULT)
+            # No background loaded, use the color
+            else:
+                temp_hex_surface.fill((255,255,255,0), special_flags=pygame.BLEND_RGBA_ADD)
+                temp_hex_surface.fill(self.background_color, special_flags=pygame.BLEND_RGBA_MULT)
 
-            if not temp_doodad_surface and doodad.get_name():
-                self.load_doodad_surface(doodad.get_name(), doodad.get_type(), self.cached_zoom)
+        else:
+            # Load tile doodad surface
+            temp_doodad_surface = None
+            doodad = tile.get_doodad()
+            if doodad:
                 temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
 
-            temp_doodad_surface = pygame.transform.scale_by(temp_doodad_surface, self.cached_zoom)
+                if not temp_doodad_surface and doodad.get_name():
+                    self.load_doodad_surface(doodad.get_name(), doodad.get_type(), self.cached_zoom)
+                    temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
+
+                temp_doodad_surface = pygame.transform.scale_by(temp_doodad_surface, self.cached_zoom)
 
         # Render the hex on the chunk surface
         # Calculate the position of the hex before rendering
@@ -381,7 +387,7 @@ class GameRenderer:
             tile_y += hex_size[1] // 2
 
         chunk_surf.blit(temp_hex_surface, (tile_x, tile_y))
-        if temp_doodad_surface:
+        if tile.owner != -1 and temp_doodad_surface:
             chunk_surf.blit(temp_doodad_surface, (tile_x, tile_y))
 
     # Generate all the chunks from the map
@@ -392,7 +398,7 @@ class GameRenderer:
         self.hexmap = hexmap
 
         map_size = hexmap.dimensions
-        print(map_size)
+        # print(map_size)
 
         tile_temp = self.visible_chunks[0][0]
 
@@ -401,7 +407,7 @@ class GameRenderer:
         end_visible_size = (clamp(len(self.visible_chunks[0]) * self.chunk_size[0], 0, map_size[0]),
                             clamp(len(self.visible_chunks) * self.chunk_size[1], 0, map_size[1]))
 
-        print(f"load positions: {start_visible_size} , {end_visible_size}")
+        # print(f"load positions: {start_visible_size} , {end_visible_size}")
 
         for y in range(start_visible_size[1], clamp(start_visible_size[1] + end_visible_size[1], 0, map_size[1])):
             for x in range(start_visible_size[0], clamp(start_visible_size[0] + end_visible_size[0], 0, map_size[0])):
@@ -442,9 +448,9 @@ class GameRenderer:
         # print(f"camera index = {pos_1_x} , {pos_1_y} ; {pos_2_x} , {pos_2_y}")
 
         # Clamp the positions to map size
-        pos_1_x = clamp(pos_1_x, 0, max_pos[0])
+        pos_1_x = clamp(pos_1_x - 1, 0, max_pos[0])
         pos_2_x = clamp(pos_2_x, 0, max_pos[0])
-        pos_1_y = clamp(pos_1_y, 0, max_pos[1])
+        pos_1_y = clamp(pos_1_y - 1, 0, max_pos[1])
         pos_2_y = clamp(pos_2_y, 0, max_pos[1])
 
         index = 0
@@ -471,8 +477,8 @@ class GameRenderer:
                         break
 
         if different_lists:
-            print("DIFFERENT")
-            print(f"{len(new_chunks)} x {len(new_chunks[0])}")
+            # print("DIFFERENT")
+            # print(f"{len(new_chunks)} x {len(new_chunks[0])}")
 
             # Delete the chunks no longer seen
             del_chunks = []
@@ -490,7 +496,7 @@ class GameRenderer:
                     if not found_chunk:
                         del_chunks.append(new_chunk)
 
-            print(f"to delete : {len(del_chunks)}")
+            # print(f"to delete : {len(del_chunks)}")
             self.delete_chunks(del_chunks)
 
             # Draw the chunks seen
@@ -511,11 +517,12 @@ class GameRenderer:
     def delete_chunks(self, chunks : list[HexChunk]):
         for ch in chunks:
             if isinstance(ch, HexChunk) and ch.chunk_surface:
-                print(f"delete chunk of position: {ch.start_position}")
+                # print(f"delete chunk of position: {ch.start_position}")
                 del ch.chunk_surface
                 ch.chunk_surface = None
             else:
-                print(f"what is this?? {ch.start_position}")
+                pass
+                # print(f"what is this?? {ch.start_position}")
         chunks.clear()
 
     # Delete all visible chunks
@@ -534,7 +541,12 @@ class GameRenderer:
         (x_tile, y_tile) = tile.position
         chunk_surface = self.chunks[y_tile // self.chunk_size[1]][x_tile // self.chunk_size[0]].chunk_surface
         color = self.color_scheme[tile.owner]
-        self.draw_tile(tile, color, chunk_surface)
+        if chunk_surface:
+            self.draw_tile(tile, color, chunk_surface)
+
+    def update_list_chunks(self, tiles : list[Hex.Hex]):
+        for tile in tiles:
+            self.update_chunk(tile)
 
     # Draw all chunks to screen
     def draw_chunks(self):
