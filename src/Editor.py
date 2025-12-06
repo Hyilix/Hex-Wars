@@ -107,7 +107,7 @@ class Brush:
     def change_doodad(self, doodad : Doodads.Doodad):
         self.__doodad = doodad
 
-    def apply_brush(self, hex_map : HexMap.HexMap, start_hex : Hex.Hex):
+    def apply_brush(self, hex_map : HexMap.HexMap, start_hex : Hex.Hex, tile_list : list[Hex.Hex]):
         # Get all the tiles that need to be modified
         action_list = ActionHandler.ActionList([])
         if self.__fill == True:
@@ -119,11 +119,15 @@ class Brush:
             # Set new owner
             if tile.owner != self.__owner:
                 action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, tile.owner, self.__owner, 'owner', tile))
+                tile_list.append(tile)
 
             # Set new doodad
             if self.__owner >= 0:
                 if tile.doodad == None or tile.doodad.get_name() != self.__doodad.get_name():
-                    action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(tile.doodad), copy.deepcopy(self.__doodad), 'doodad', tile))
+                    if self.__doodad != None:
+                        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(tile.doodad), copy.deepcopy(self.__doodad), 'doodad', tile))
+                        if tile not in tile_list:
+                            tile_list.append(tile)
 
         return action_list
 
@@ -153,8 +157,9 @@ class Editor:
         self.__tabs_visible = True
 
         self.action_handler = ActionHandler.History()
+        self.__current_action_list = None
 
-        self.brush = Brush(2, False, 3, Doodads.Tree())
+        self.brush = Brush(1, False, 1, None)
 
         self.__active_tab = TabMenu.WORLD
 
@@ -174,12 +179,23 @@ class Editor:
         MapHandling.save_game(self.__config, game_name)
 
     def apply_brush(self, start_hex : Hex.Hex):
-        print("Editor applied brush")
-        action_list = self.brush.apply_brush(self.__hex_map, start_hex)
+        # print("Editor applied brush")
+        tile_list : list[Hex.Hex] = []
+        action_list = self.brush.apply_brush(self.__hex_map, start_hex, tile_list)
 
         self.action_handler.add_action_list(action_list)
 
-        self.__renderer.load_chunks(self.__hex_map)
+        # self.__renderer.load_chunks(self.__hex_map)
+        self.__renderer.update_list_chunks(tile_list)
+        tile_list = []
+
+    def make_new_action_list(self):
+        self.__current_action_list = ActionHandler.ActionList([])
+
+    def set_action_list(self):
+        if self.__current_action_list:
+            self.action_handler.add_action_list(self.__current_action_list)
+        self.__current_action_list = None
 
     def render_tabs(self, screen):
         if self.__tabs_visible:

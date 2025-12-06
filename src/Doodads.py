@@ -11,6 +11,9 @@ class Doodad:
     def get_name(self):
         return None
 
+    def reload_doodad(self):
+        pass
+
 # NOTE:
 # Owner convention:
 #  -1 ->  tile not existing

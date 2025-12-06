@@ -16,6 +16,10 @@ class KeyboardState:
             self.is_ctrl_hold = False
             self.key_pressed = None
             self.key_is_down = False
+
+            self.is_mouse1_down = False
+            self.is_mouse2_down = False
+
             KeyboardState.__initialized = True
 
     def parse_key_input(self, key, is_down : bool):
@@ -28,4 +32,10 @@ class KeyboardState:
             self.key_is_down = is_down
 
         pygame.event.post(pygame.event.Event(Events.KEYBOARD_CHANGED))
+
+    def parse_mouse_state(self, key, is_down : bool):
+        if key == 1:
+            self.is_mouse1_down = is_down
+        elif key == 2:
+            self.is_mouse2_down = is_down
 

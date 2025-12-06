@@ -61,7 +61,7 @@ FPS = 144
 
 running = True
 while running:
-    screen.fill(colors.gray_very_dark)  # background color
+    screen.fill(renderer.background_color)  # background color
     renderer.draw_chunks()
     test_editor.render_tabs(screen)
     keyboard_handled_this_frame = False
@@ -93,20 +93,38 @@ while running:
         elif event.type == pygame.MOUSEWHEEL:
             renderer.set_zoom(round(event.y, 1) * renderer.zoom_settings[2] + renderer.current_zoom)
 
+        keyboard_state = KeyboardState.KeyboardState()
+
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
+                # TODO: Remove button test
                 mouse_pos = event.pos
                 print(f"Mouse clicked at: {mouse_pos}")
                 if quit_button1.collidepoint(event.pos):
                     print("Button clicked!")
 
+                keyboard_state.parse_mouse_state(1, True)
+
+            if event.button == 2:
+                keyboard_state.parse_mouse_state(2, True)
+
+        if event.type == pygame.MOUSEBUTTONUP:
+            if event.button == 1:
+                keyboard_state.parse_mouse_state(1, False)
+
+            if event.button == 2:
+                keyboard_state.parse_mouse_state(2, False)
+
+        if event.type == pygame.MOUSEMOTION:
+            if keyboard_state.is_mouse1_down:
+                mouse_pos = event.pos
+
                 tile_pos = camera_test.get_tile_at_position(mouse_pos)
-                current_tile = test_hex_map.get_tile_at_position(tile_pos)
-
-                # test_editor.apply_brush(current_tile)
-                test_editor.handle_mouse_action(mouse_pos, current_tile)
-
-        keyboard_state = KeyboardState.KeyboardState()
+                # Check if tile is within bounds
+                if tile_pos[0] >= 0 and tile_pos[0] < test_hex_map.dimensions[0]:
+                    if tile_pos[1] >= 0 and tile_pos[1] < test_hex_map.dimensions[1]:
+                        current_tile = test_hex_map.get_tile_at_position(tile_pos)
+                        test_editor.handle_mouse_action(mouse_pos, current_tile)
 
         if event.type == pygame.KEYDOWN:
             keyboard_state.parse_key_input(event.key, True)

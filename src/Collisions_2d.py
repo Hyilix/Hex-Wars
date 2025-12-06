@@ -3,10 +3,10 @@
 
 # Point in Triangle collision. It is expected that the Triangle is passed as an array of 3 tuples
 def point_trig(point : tuple[int, int], trig : list[tuple[int, int]]):
-    print(f"Point: {point}")
-    print("Trig points:")
-    for p in trig:
-        print(f"{p}");
+    # print(f"Point: {point}")
+    # print("Trig points:")
+    # for p in trig:
+    #     print(f"{p}");
 
     (x1, y1) = trig[0]
     (x2, y2) = trig[1]

@@ -44,8 +44,14 @@ class ActionList:
         for action in self.__actions:
             action.undo_action()
 
+    def combine_action_lists(self, other):
+        for action in other.__actions:
+            self.add_action(action)
+
     def is_list_empty(self):
-        return len(self.__actions) == 0
+        if len(self.__actions) == 0:
+            return True
+        return False
 
 # Class containing ActionLists and handles the actions
 class History:
@@ -59,7 +65,7 @@ class History:
         queue.clear()
 
     def add_action_list(self, action : ActionList):
-        if action.is_list_empty() == 0:
+        if action.is_list_empty() == False:
             self.__history.append(action)
             self.__deep_clear_queue(self.__undo)
             action.apply_actions()
