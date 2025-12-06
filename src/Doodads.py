@@ -117,7 +117,7 @@ class UnitTier4(Unit):
 class Tree(Doodad):
     def __init__(self):
         super().__init__(income = -1)
-        self.type = random.randint(1, 2)
+        self.type = 1
 
     def get_type(self):
         return "tree"
@@ -128,7 +128,7 @@ class Tree(Doodad):
 class Grave(Doodad):
     def __init__(self):
         super().__init__(income = 0)
-        self.type = random.randint(1, 2)
+        self.type = 1
 
     def get_type(self):
         return "grave"
