@@ -17,6 +17,7 @@ import colors
 import ActionHandler
 import KeyboardState
 import InfoTabs
+import ButtonHandler
 
 # Enum class for representing current tab opened
 class TabMenu(Enum):
@@ -45,6 +46,14 @@ class Tab:
     def clear_clicked_inside(self):
         self.__is_clicked_inside = False
 
+    def get_buttons(self):
+        return self.__buttons
+
+    def buttons_click_action(self, mouse_pos : tuple[int, int], editor):
+        for button in self.__buttons:
+            if button.check_mouse_collision(mouse_pos):
+                button.call_function(editor, button)
+
     # Determine if the mouse is inside the tab
     def click_action(self, mouse_pos : tuple[int, int]):
         self.__is_clicked_inside = Collisions_2d.point_rect(mouse_pos, self.__pos, self.__size)
@@ -56,22 +65,41 @@ class Tab:
         self.__buttons = buttons.copy()
 
     # Spread the buttons evenly on the tab, having equal distance between them on the x-axis
-    def spread_buttons(self, buttons_per_row : int):
-        no_buttons = len(self.__buttons)
+    def spread_buttons(self, buttons_per_row : int = 0):
         y_offset = 10
-        button_distance = (self.__buttons[0].__size[0] // buttons_per_row, y_offset)
+        x_offset = 10
 
-        y_size = self.__buttons[0].__size[1] + y_offset
+        if buttons_per_row == 0:
+            # Calculate how many buttons can fit with proper spacing
+            button_width = self.__buttons[0].get_size()[0]
+            available_width = self.__size[0] - (2 * x_offset)
 
-        # Set button position
-        x = 0
+            # Estimate spacing (use a minimum spacing value)
+            min_spacing = 10
+            buttons_per_row = max(1, available_width // (button_width + min_spacing))
+
+        # Calculate spacing between buttons
+        available_width = self.__size[0] - (2 * x_offset)
+        button_width = self.__buttons[0].get_size()[0]
+
+        # Calculate spacing to distribute buttons evenly
+        total_button_width = button_width * buttons_per_row
+        remaining_space = available_width - total_button_width
+        spacing = remaining_space // (buttons_per_row + 1)
+
+        # Set button positions
+        row = 0
+        col = 0
         for button in self.__buttons:
-            button.change_pos((x * button_distance[0], (button.__size[1] % y_size) * y_size))
+            x_pos = self.__pos[0] + x_offset + spacing + col * (button_width + spacing)
+            y_pos = self.__pos[1] + y_offset + row * (button.get_size()[1] + y_offset)
+            button.change_pos((x_pos, y_pos))
 
-            # Increment x
-            x += 1
-            if x == buttons_per_row:
-                x = 0
+            # Move to next column, or wrap to next row
+            col += 1
+            if col == buttons_per_row:
+                col = 0
+                row += 1
 
     def change_background_color(self, new_color : tuple[int, int, int, int]):
         self.__background_color = new_color
@@ -87,6 +115,11 @@ class Tab:
             self.create_color_surface()
 
         screen.blit(self.__color_surface, self.__pos)
+
+    def draw_tab(self, screen):
+        self.draw_background_color(screen)
+        for button in self.__buttons:
+            button.draw(screen)
 
 class Brush:
     def __init__(self, size : int, fill : bool, owner : int, doodad : Doodads.Doodad):
@@ -159,12 +192,17 @@ class Editor:
         self.action_handler = ActionHandler.History()
         self.__current_action_list = None
 
-        self.brush = Brush(1, False, 1, None)
+        self.brush = Brush(1, False, -1, None)
 
         self.__active_tab = TabMenu.WORLD
 
         self.worldtab = Tab((3 * screen_size[0] // 4, 0), ((screen_size[0] // 4, screen_size[1])), colors.tab_color)
+        self.worldtab.fill_buttons_list(ButtonHandler.load_world_buttons())
+        self.worldtab.spread_buttons()
+
         self.utiltab = Tab((0, 0), (screen_size[0] // 4, screen_size[1]), colors.tab_color)
+        self.utiltab.fill_buttons_list(ButtonHandler.load_main_buttons())
+        self.utiltab.spread_buttons()
 
         self.test_info = InfoTabs.InfoTab(False, 4.0, (screen_size[0] // 12, 11 * screen_size[1] // 12))
 
@@ -178,14 +216,21 @@ class Editor:
     def save_game(self, game_name : str):
         MapHandling.save_game(self.__config, game_name)
 
+    def change_owner(self, new_owner):
+        self.brush.change_owner(new_owner)
+
+    def change_doodad(self, new_doodad):
+        self.brush.change_doodad(new_doodad)
+
+    def set_fill(self, fill : bool):
+        self.brush.change_fill(fill)
+
     def apply_brush(self, start_hex : Hex.Hex):
-        # print("Editor applied brush")
         tile_list : list[Hex.Hex] = []
         action_list = self.brush.apply_brush(self.__hex_map, start_hex, tile_list)
 
         self.action_handler.add_action_list(action_list)
 
-        # self.__renderer.load_chunks(self.__hex_map)
         self.__renderer.update_list_chunks(tile_list)
         tile_list = []
 
@@ -200,11 +245,11 @@ class Editor:
     def render_tabs(self, screen):
         if self.__tabs_visible:
             if self.__active_tab == TabMenu.WORLD:
-                self.worldtab.draw_background_color(screen)
+                self.worldtab.draw_tab(screen)
 
-            self.utiltab.draw_background_color(screen)
+            self.utiltab.draw_tab(screen)
 
-    def handle_mouse_action(self, mouse_pos : tuple[int, int], tile):
+    def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
         first_collision = self.utiltab.click_action(mouse_pos)
         second_collision = self.worldtab.click_action(mouse_pos)
 
@@ -213,8 +258,13 @@ class Editor:
         else:
             self.__map_focus = True
 
-        if self.__map_focus == True:
+        if self.__map_focus == True and tile != None:
             self.apply_brush(tile)
+        elif click_once == True:
+            if first_collision:
+                self.utiltab.buttons_click_action(mouse_pos, self)
+            elif second_collision:
+                self.worldtab.buttons_click_action(mouse_pos, self)
 
         self.utiltab.clear_clicked_inside()
         self.worldtab.clear_clicked_inside()
@@ -229,9 +279,9 @@ class Editor:
             if key_down == True:
                 # Action handler
                 if key_pressed == pygame.K_z:
-                    self.__handle_action_handler(True)
+                    self.handle_action_handler(True)
                 elif key_pressed == pygame.K_y:
-                    self.__handle_action_handler(False)
+                    self.handle_action_handler(False)
 
                 # Tab handler
                 if key_pressed == pygame.K_v:
@@ -240,14 +290,14 @@ class Editor:
                 if key_pressed == pygame.K_h:
                     self.test_info.render_text("Hello", screen)
 
-    # Local functions
-    def __handle_action_handler(self, to_undo : bool):
+    def handle_action_handler(self, to_undo : bool):
         if to_undo:
-            self.action_handler.undo_action_last()
+            self.action_handler.undo_last_action()
         else:
             self.action_handler.redo_last_action()
         self.__renderer.load_chunks(self.__hex_map)
 
+    # Local functions
     def __switch_tab_visility(self):
         self.__tabs_visible = not self.__tabs_visible
 

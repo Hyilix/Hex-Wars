@@ -70,7 +70,7 @@ class History:
             self.__deep_clear_queue(self.__undo)
             action.apply_actions()
 
-    def undo_action_last(self):
+    def undo_last_action(self):
         if self.__history:
             last_action = self.__history.pop()
             self.__undo.append(last_action)

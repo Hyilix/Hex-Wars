@@ -97,13 +97,17 @@ while running:
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
-                # TODO: Remove button test
-                mouse_pos = event.pos
-                print(f"Mouse clicked at: {mouse_pos}")
-                if quit_button1.collidepoint(event.pos):
-                    print("Button clicked!")
-
                 keyboard_state.parse_mouse_state(1, True)
+                mouse_pos = event.pos
+
+                tile_pos = camera_test.get_tile_at_position(mouse_pos)
+                # Check if tile is within bounds
+                if (tile_pos[0] >= 0 and tile_pos[0] < test_hex_map.dimensions[0] and
+                    tile_pos[1] >= 0 and tile_pos[1] < test_hex_map.dimensions[1]):
+                    current_tile = test_hex_map.get_tile_at_position(tile_pos)
+                    test_editor.handle_mouse_action(mouse_pos, current_tile, True)
+                else:
+                    test_editor.handle_mouse_action(mouse_pos, None, True)
 
             if event.button == 2:
                 keyboard_state.parse_mouse_state(2, True)
