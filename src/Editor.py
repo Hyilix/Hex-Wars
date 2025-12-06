@@ -13,6 +13,7 @@ import MapHandling
 import Collisions_2d
 import button
 import colors
+import Events
 
 import ActionHandler
 import KeyboardState
@@ -156,8 +157,8 @@ class Brush:
 
             # Set new doodad
             if self.__owner >= 0:
-                if tile.doodad == None or tile.doodad.get_name() != self.__doodad.get_name():
-                    if self.__doodad != None:
+                if tile.doodad == None or self.__doodad == None or tile.doodad.get_name() != self.__doodad.get_name():
+                    if tile.doodad != self.__doodad:
                         action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(tile.doodad), copy.deepcopy(self.__doodad), 'doodad', tile))
                         if tile not in tile_list:
                             tile_list.append(tile)
@@ -188,6 +189,7 @@ class Editor:
         # False -> action is focused on the tabs
         self.__map_focus = True
         self.__tabs_visible = True
+        self.__is_blocked = False
 
         self.action_handler = ActionHandler.History()
         self.__current_action_list = None
@@ -204,17 +206,31 @@ class Editor:
         self.utiltab.fill_buttons_list(ButtonHandler.load_main_buttons())
         self.utiltab.spread_buttons()
 
-        self.test_info = InfoTabs.InfoTab(False, 4.0, (screen_size[0] // 12, 11 * screen_size[1] // 12))
+        self.help_info = InfoTabs.InfoHelp((screen_size[0] // 12, screen_size[1] // 12))
+        self.save_info = InfoTabs.InfoSave((screen_size[0] // 12, screen_size[1] // 12))
+        self.load_info = InfoTabs.InfoLoad((screen_size[0] // 12, screen_size[1] // 12))
+
+    def is_blocked(self):
+        return self.__is_blocked
 
     # Load a game and save the game configuration
-    def load_game(self, game_name : str):
-        config = MapHandling.load_game(game_name)
-        self.__config = config
-        self.__renderer.reload_renderer(self.__hex_map)
+    def load_game(self):
+        game_name = self.__config.get("Name")
+        config = MapHandling.load_map(game_name)
+        if config != None:
+            self.__config = config
+
+            self.__hex_map = self.__config.get("Map")
+            self.__renderer.reload_renderer(self.__hex_map)
+
+            pygame.event.post(pygame.event.Event(Events.MAP_CHANGED))
+
+    def get_editor_map(self):
+        return self.__hex_map
 
     # Save the current game
-    def save_game(self, game_name : str):
-        MapHandling.save_game(self.__config, game_name)
+    def save_game(self):
+        MapHandling.save_map(self.__config)
 
     def change_owner(self, new_owner):
         self.brush.change_owner(new_owner)
@@ -249,7 +265,14 @@ class Editor:
 
             self.utiltab.draw_tab(screen)
 
+        self.help_info.render(screen)
+        self.save_info.render_with_name(screen, self.__config.get("Name"))
+        self.load_info.render_with_name(screen, self.__config.get("Name"))
+
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
+        if self.__is_blocked:
+            return
+
         first_collision = self.utiltab.click_action(mouse_pos)
         second_collision = self.worldtab.click_action(mouse_pos)
 
@@ -271,24 +294,75 @@ class Editor:
 
     def handle_keyboard_action(self, screen):
         keyboardstate = KeyboardState.KeyboardState()
+        key_pressed = keyboardstate.key_pressed
+        key_down = keyboardstate.key_is_down
+
+        # Close any info tab open
+        if key_pressed == pygame.K_ESCAPE:
+            if self.help_info.to_render():
+                self.help_info.toggle_render()
+            if self.save_info.to_render():
+                self.save_info.toggle_render()
+            if self.load_info.to_render():
+                self.load_info.toggle_render()
+
+            self.__is_blocked = False
+
+        # Save/Load when tab is open
+        if key_pressed == pygame.K_RETURN:
+            if self.save_info.to_render():
+                self.save_game()
+                self.save_info.toggle_render()
+            if self.load_info.to_render():
+                self.load_game()
+                self.load_info.toggle_render()
+
+            self.__is_blocked = False
 
         if keyboardstate.is_ctrl_hold:
-            key_pressed = keyboardstate.key_pressed
-            key_down = keyboardstate.key_is_down
-
             if key_down == True:
                 # Action handler
-                if key_pressed == pygame.K_z:
-                    self.handle_action_handler(True)
-                elif key_pressed == pygame.K_y:
-                    self.handle_action_handler(False)
+                if self.__is_blocked == False:
+                    if key_pressed == pygame.K_z:
+                        self.handle_action_handler(True)
+                    elif key_pressed == pygame.K_y:
+                        self.handle_action_handler(False)
 
-                # Tab handler
-                if key_pressed == pygame.K_v:
-                    self.__switch_tab_visility()
+                    # Tab handler
+                    if key_pressed == pygame.K_v:
+                        self.__switch_tab_visility()
 
                 if key_pressed == pygame.K_h:
-                    self.test_info.render_text("Hello", screen)
+                    if not self.save_info.to_render() and not self.load_info.to_render():
+                        self.help_info.toggle_render()
+                        self.__is_blocked = self.help_info.to_render()
+
+                if key_pressed == pygame.K_l:
+                    if not self.help_info.to_render() and not self.save_info.to_render():
+                        self.load_info.toggle_render()
+                        self.__is_blocked = self.load_info.to_render()
+
+                if key_pressed == pygame.K_s and keyboardstate.is_shift_hold == False:
+                    if not self.help_info.to_render() and not self.load_info.to_render():
+                        self.save_info.toggle_render()
+                        self.__is_blocked = self.save_info.to_render()
+
+                if key_pressed == pygame.K_s and keyboardstate.is_shift_hold == True:
+                    self.save_game()
+        else:
+            if self.save_info.to_render():
+                if keyboardstate.unicode != None and keyboardstate.key_pressed != None and keyboardstate.key_is_down == True:
+                    new_name = self.save_info.add_key(keyboardstate.unicode, keyboardstate.key_pressed, self.__config.get("Name"))
+
+                    if new_name != None:
+                        self.__config["Name"] = new_name
+
+            if self.load_info.to_render():
+                if keyboardstate.unicode != None and keyboardstate.key_pressed != None and keyboardstate.key_is_down == True:
+                    new_name = self.load_info.add_key(keyboardstate.unicode, keyboardstate.key_pressed, self.__config.get("Name"))
+
+                    if new_name != None:
+                        self.__config["Name"] = new_name
 
     def handle_action_handler(self, to_undo : bool):
         if to_undo:

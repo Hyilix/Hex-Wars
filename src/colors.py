@@ -13,6 +13,8 @@ gray_light = (192, 192, 192)
 gray_dark = (96, 96, 96)
 gray_very_dark = (50, 50, 50)
 
+dark = (32, 32, 32, 150)
+
 modRed = (5,0,0)
 modGreen = (0,5,0)
 modBlue = (0,0,5)

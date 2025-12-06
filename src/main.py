@@ -68,14 +68,15 @@ while running:
 
     for event in pygame.event.get():
         if event.type == pygame.MOUSEMOTION:
-            new_coord = pygame.mouse.get_pos()
+            if test_editor.is_blocked() == False:
+                new_coord = pygame.mouse.get_pos()
 
-            # Pan the camera
-            if camera_test.panning_mode == True:
-                win_size = pygame.display.get_window_size()
-                (x_dir, y_dir) = (new_coord[0] - camera_test.pan_pivot[0], new_coord[1] - camera_test.pan_pivot[1])
-                camera_test.add_direction((x_dir, y_dir))
-                renderer.get_visible_chunks()
+                # Pan the camera
+                if camera_test.panning_mode == True:
+                    win_size = pygame.display.get_window_size()
+                    (x_dir, y_dir) = (new_coord[0] - camera_test.pan_pivot[0], new_coord[1] - camera_test.pan_pivot[1])
+                    camera_test.add_direction((x_dir, y_dir))
+                    renderer.get_visible_chunks()
 
         if event.type == pygame.QUIT:
             running = False
@@ -131,10 +132,10 @@ while running:
                         test_editor.handle_mouse_action(mouse_pos, current_tile)
 
         if event.type == pygame.KEYDOWN:
-            keyboard_state.parse_key_input(event.key, True)
+            keyboard_state.parse_key_input(event.key, event.unicode, True)
 
         if event.type == pygame.KEYUP:
-            keyboard_state.parse_key_input(event.key, False)
+            keyboard_state.parse_key_input(event.key, event.unicode, False)
 
         if event.type == Events.KEYBOARD_CHANGED:
             if not keyboard_handled_this_frame:
@@ -142,6 +143,9 @@ while running:
                 test_editor.handle_keyboard_action(screen)
 
                 keyboard_handled_this_frame = True
+
+        if event.type == Events.MAP_CHANGED:
+            test_hex_map = test_editor.get_editor_map()
 
     # Update display
     pygame.display.flip()

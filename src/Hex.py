@@ -47,7 +47,7 @@ class Hex:
 
     def is_hex_identical(self, tile):
         if self.owner == tile.owner:
-            if (self.doodad and tile.doodad):
+            if (self.doodad and tile.doodad) or (self.doodad == None and tile.doodad == None):
                 if self.doodad == None or self.doodad.type == tile.doodad.type:
                     return True
 

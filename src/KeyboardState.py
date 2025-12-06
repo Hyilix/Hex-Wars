@@ -14,22 +14,30 @@ class KeyboardState:
     def __init__(self):
         if not KeyboardState.__initialized:
             self.is_ctrl_hold = False
+            self.is_shift_hold = False
+
             self.key_pressed = None
             self.key_is_down = False
+
+            self.unicode = None
 
             self.is_mouse1_down = False
             self.is_mouse2_down = False
 
             KeyboardState.__initialized = True
 
-    def parse_key_input(self, key, is_down : bool):
+    def parse_key_input(self, key, unicode, is_down : bool):
         # Handle special keys
         if key == pygame.K_LCTRL:
             self.is_ctrl_hold = is_down
+        elif key == pygame.K_LSHIFT:
+            self.is_shift_hold = is_down
         else:
             # Store the key pressed
             self.key_pressed = key
             self.key_is_down = is_down
+
+        self.unicode = unicode
 
         pygame.event.post(pygame.event.Event(Events.KEYBOARD_CHANGED))
 

@@ -233,7 +233,6 @@ class GameRenderer:
 
     # Load new doodad surface
     def load_doodad_surface(self, img_name : str, doodad_type : str, scale : float = 1):
-        # print(f"load surface : {img_name}")
         doodad_surface = pygame.image.load(self.texture_path + doodad_type + "s/" + img_name + ".png")
 
         self.doodad_cache.append(DoodadCacheUnit(doodad_surface, img_name))
