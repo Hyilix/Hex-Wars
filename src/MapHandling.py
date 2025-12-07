@@ -71,7 +71,7 @@ def __check_valid_map(dir_path : str):
 def __save_map_image(hex_map, renderer):
     map_surf = renderer.draw_entire_map_separate(hex_map)
 
-    map_surf = pygame.transform.scale(map_surf, (1000, 1000))
+    map_surf = pygame.transform.scale(map_surf, (256, 256))
     return map_surf
 
 # Save current game

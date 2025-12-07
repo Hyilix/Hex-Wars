@@ -236,6 +236,7 @@ class Editor:
 
         self.__hex_map = HexMap.HexMap(new_dims[0], new_dims[1], 0)
         self.__renderer.reload_renderer(self.__hex_map)
+        self.__config["Map"] = self.__hex_map
 
         pygame.event.post(pygame.event.Event(Events.MAP_CHANGED))
 
