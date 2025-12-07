@@ -134,6 +134,10 @@ while running:
         if event.type == Events.MAP_CHANGED:
             test_hex_map = test_editor.get_editor_map()
 
+        if event.type == Events.CENTER_CAMERA:
+            camera_test.set_position(renderer.get_map_center(test_hex_map))
+            renderer.get_visible_chunks()
+
     # Update display
     pygame.display.flip()
 

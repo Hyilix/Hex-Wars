@@ -63,6 +63,17 @@ class Tab:
     def fill_buttons_list(self, buttons : list[button.Button]):
         self.__buttons = buttons.copy()
 
+    def add_buttons(self, buttons : list[button.Button]):
+        last_pos = self.__buttons[-1].get_pos()
+
+        last_y = last_pos[1] + 2 * buttons[0].get_size()[1]
+        print(f"Last y pos: {last_y}")
+
+        for button in buttons:
+            button.change_pos((self.__size[0] // 2 - button.get_size()[0] // 2, last_y))
+            last_y += button.get_size()[1] + 10
+            self.__buttons.append(button)
+
     # Spread the buttons evenly on the tab, having equal distance between them on the x-axis
     def spread_buttons(self, buttons_per_row : int = 0):
         y_offset = 10
@@ -206,6 +217,7 @@ class Editor:
         self.utiltab = Tab((0, 0), (screen_size[0] // 4, screen_size[1]), colors.tab_color)
         self.utiltab.fill_buttons_list(ButtonHandler.load_main_buttons())
         self.utiltab.spread_buttons()
+        self.utiltab.add_buttons(ButtonHandler.load_misc_buttons())
 
         self.help_info = InfoTabs.InfoHelp((screen_size[0] // 12, screen_size[1] // 12))
         self.save_info = InfoTabs.InfoSave((screen_size[0] // 12, screen_size[1] // 12))
@@ -223,6 +235,9 @@ class Editor:
         else:
             print("Invalid map size format")
             return None
+
+    def __map_size_to_str(self, map_size : tuple[int, int]):
+        return str(map_size[0]) + 'x' + str(map_size[1])
 
     def change_map_dimensions(self):
         new_dims = self.__map_size_from_str(self.__map_size)
@@ -249,6 +264,7 @@ class Editor:
 
             self.__hex_map = self.__config.get("Map")
             self.__renderer.reload_renderer(self.__hex_map)
+            self.__map_size = self.__map_size_to_str(self.__hex_map.dimensions)
 
             pygame.event.post(pygame.event.Event(Events.MAP_CHANGED))
 
@@ -311,7 +327,7 @@ class Editor:
 
         if self.__map_focus == True and tile != None:
             self.apply_brush(tile)
-        elif click_once == True:
+        elif click_once == True and self.__tabs_visible:
             if first_collision:
                 self.utiltab.buttons_click_action(mouse_pos, self)
             elif second_collision:
@@ -335,6 +351,7 @@ class Editor:
                 self.load_info.toggle_render()
             if self.map_info.to_render():
                 self.map_info.toggle_render()
+                self.__map_size = self.__map_size_to_str(self.__hex_map.dimensions)
 
             self.__is_blocked = False
 

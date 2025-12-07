@@ -1,5 +1,6 @@
 import pygame
 
+import Events
 import button
 import Doodads
 
@@ -32,8 +33,13 @@ def select_pen(editor, button):
     select_this(button)
     editor.set_fill(False)
 
-# TODO: brush size
-# TODO: center world
+# Misc buttons
+
+def change_brush(editor, button):
+    pass
+
+def center_world(editor, button):
+    pygame.event.post(pygame.event.Event(Events.CENTER_CAMERA))
 
 # World buttons
 def select_owner_no(editor, button):
@@ -169,6 +175,18 @@ def load_main_buttons():
     pen.load_texture(DEFAULT_UI_PATH + "main/Pen.png")
     pen.set_highlight(True)
     buttons.append(pen)
+
+    return buttons
+
+def load_misc_buttons():
+    buttons : list[button.Button] = []
+
+    center = button.TextureButton((0, 0), (196, 64), center_world)
+    center.load_texture(DEFAULT_UI_PATH + "center/Center.png")
+    buttons.append(center)
+    #
+    # brush = button.SliderButton((0, 0), (196, 64), change_brush)
+    # buttons.append(brush)
 
     return buttons
 

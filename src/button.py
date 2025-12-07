@@ -52,6 +52,10 @@ class SimpleButton(Button):
         self.DEFAULT_FONT = 'freesansbold.ttf'
         self.BUTTON_FONT = pygame.font.Font(self.DEFAULT_FONT, 16)
 
+    def change_pos(self, new_pos: tuple[int, int]):
+        super().change_pos(new_pos)
+        self.border.topleft = new_pos
+
     def render_text(self, screen):
         text = self.BUTTON_FONT.render(self.content, True, colors.gray_light)
         text_rect = text.get_rect()
@@ -105,8 +109,10 @@ class TextureButton(Button):
 
 # Button having a slider
 class SliderButton(Button):
-    def __init__(self, pos : tuple[int, int], size : tuple[int, int], func = None):
+    def __init__(self, pos : tuple[int, int], size : tuple[int, int], content : str, func = None):
         super().__init__(pos, size, func)
+
+        self.content = content
 
         self.__border_color = colors.gray_light
         self.__slider_color = colors.gray_light
@@ -115,4 +121,5 @@ class SliderButton(Button):
 
         # 0-100 procent of fill
         self.__slider_progress = 0
+
 
