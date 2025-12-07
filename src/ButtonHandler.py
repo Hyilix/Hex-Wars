@@ -155,13 +155,18 @@ def load_main_buttons():
     menu.load_texture(DEFAULT_UI_PATH + "main/Menu Button.png")
     buttons.append(menu)
 
-    picker = button.TextureButton((0, 0), (64, 64), select_picker)
-    picker.load_texture(DEFAULT_UI_PATH + "main/Picker.png")
-    buttons.append(picker)
+    # picker = button.TextureButton((0, 0), (64, 64), select_picker)
+    # picker.load_texture(DEFAULT_UI_PATH + "main/Picker.png")
+    # buttons.append(picker)
 
     fill = button.TextureButton((0, 0), (64, 64), select_fill)
     fill.load_texture(DEFAULT_UI_PATH + "main/Fill.png")
     buttons.append(fill)
+
+    pen = button.TextureButton((0, 0), (64, 64), select_pen)
+    pen.load_texture(DEFAULT_UI_PATH + "main/Pen.png")
+    pen.set_highlight(True)
+    buttons.append(pen)
 
     undo = button.TextureButton((0, 0), (64, 64), select_undo)
     undo.load_texture(DEFAULT_UI_PATH + "main/Undo.png")
@@ -170,11 +175,6 @@ def load_main_buttons():
     redo = button.TextureButton((0, 0), (64, 64), select_redo)
     redo.load_texture(DEFAULT_UI_PATH + "main/Redo.png")
     buttons.append(redo)
-
-    pen = button.TextureButton((0, 0), (64, 64), select_pen)
-    pen.load_texture(DEFAULT_UI_PATH + "main/Pen.png")
-    pen.set_highlight(True)
-    buttons.append(pen)
 
     return buttons
 
