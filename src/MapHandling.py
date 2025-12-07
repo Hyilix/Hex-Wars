@@ -6,6 +6,7 @@ import os
 
 import HexMap
 import Hex
+import pygame
 
 MAX_DUPLICATE_FILE = 1000
 
@@ -19,7 +20,7 @@ DEFAULT_INFO_SUFFIX : str = ".hmap"
 
 DEFAULT_PREVIEW_NAME : str = "preview"
 # For saving, always use the first suffix
-DEFAULT_PREVIEW_SUFFIX : list[str] = [".png", ".jpg"]
+DEFAULT_PREVIEW_SUFFIX : str = ".png"
 
 # Map serialization format:
 
@@ -66,6 +67,12 @@ def __check_valid_map(dir_path : str):
         if os.path.exists(dir_path + "/" + DEFAULT_INFO_NAME + DEFAULT_INFO_SUFFIX):
             return True
     return False
+
+def __save_map_image(hex_map, renderer):
+    map_surf = renderer.draw_entire_map_separate(hex_map)
+
+    map_surf = pygame.transform.scale(map_surf, (1000, 1000))
+    return map_surf
 
 # Save current game
 def save_game(config : dict, save_name = None):
@@ -136,7 +143,7 @@ def load_game(game_name : str):
             return pickle.load(info_file)
 
 # Save current map (map editor)
-def save_map(config : dict):
+def save_map(config : dict, renderer):
     # The name of the map
     map_name = str(config.get("Name"))
     new_path = DEFAULT_MAP_PATH + map_name + "/"
@@ -181,6 +188,8 @@ def save_map(config : dict):
 
         # Pickle the database to info_map
         pickle.dump(database, info_map)
+
+    pygame.image.save(__save_map_image(database['Map'], renderer), dir_path + "/" + DEFAULT_PREVIEW_NAME + DEFAULT_PREVIEW_SUFFIX)
 
 # Load a map (lobby and map editor)
 def load_map(map_name : str):

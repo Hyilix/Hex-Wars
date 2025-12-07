@@ -23,8 +23,6 @@ import ButtonHandler
 # Enum class for representing current tab opened
 class TabMenu(Enum):
     WORLD = 10
-    ECONOMY = 11
-    SETTINS = 12
 
 # Tab super class for all the editor's tabs
 class Tab:
@@ -230,7 +228,7 @@ class Editor:
 
     # Save the current game
     def save_game(self):
-        MapHandling.save_map(self.__config)
+        MapHandling.save_map(self.__config, self.__renderer)
 
     def change_owner(self, new_owner):
         self.brush.change_owner(new_owner)

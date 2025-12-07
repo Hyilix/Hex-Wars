@@ -26,19 +26,6 @@ pygame.display.set_caption("Hex game")
 clock = pygame.time.Clock() 
 font = pygame.font.SysFont(None, 25)
 
-quit_button1 = pygame.Rect(10, 10, 50, 25)
-quit_button2 = pygame.Rect(12, 12, 46, 21)
-quit_button3 = pygame.Rect(10, 10, 50, 25)
-
-
-def draw_button():
-    pygame.draw.rect(screen, (200, 200, 200), quit_button1)
-    pygame.draw.rect(screen, (0, 0, 0), quit_button2)
-    # pygame.draw.rect(screen, (0, 128, 255), quit_button)
-    text_surface = font.render('Quit', True, (255, 255, 255))
-    text_rect = text_surface.get_rect(center=quit_button1.center)
-    screen.blit(text_surface, text_rect)
-
 # Create a Camera
 # Note, use the window size as camera default
 camera_test = GameRenderer.Camera(screen_size, (0, 0), 1)
@@ -155,33 +142,3 @@ while running:
 
 pygame.quit()
 
-        # if event.type == pygame.KEYDOWN:
-        #     # Test map saving
-        #     if event.key == pygame.key.key_code('k'):
-        #         MapHandling.save_game({
-        #             "Name": "Map Test 1",
-        #             "Players": [],
-        #             "CurrentPlayer": 0,
-        #             "Map": test_hex_map
-        #                                }, "test_map_1")
-        #
-        #     # Test map loading
-        #     elif event.key == pygame.key.key_code('l'):
-        #         config : dict = MapHandling.load_game("test_map_1")
-        #
-        #         test_hex_map = copy.deepcopy(config.get("Map"))
-        #
-        #         renderer.reload_renderer(test_hex_map)
-        #         # renderer.clear_visible_chunks()
-        #         # renderer.get_visible_chunks()
-        #         # print(f"Map: {test_hex_map.hexmap[0][0].doodad}")
-        #
-        #     elif event.key == pygame.key.key_code('z'):
-        #         print("Undo")
-        #         test_editor.action_handler.undo_action_last()
-        #         renderer.load_chunks(test_hex_map)
-        #
-        #     elif event.key == pygame.key.key_code('y'):
-        #         print("Redo")
-        #         test_editor.action_handler.redo_last_action()
-        #         renderer.load_chunks(test_hex_map)

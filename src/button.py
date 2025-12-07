@@ -1,3 +1,4 @@
+from contextlib import contextmanager
 from os import posix_fadvise
 import pygame
 
@@ -39,18 +40,29 @@ class Button:
 
 # Button made from 2 rectangle
 class SimpleButton(Button):
-    def __init__(self, pos : tuple[int, int], size : tuple[int, int], func = None):
+    def __init__(self, pos : tuple[int, int], size : tuple[int, int], content : str, func = None):
         super().__init__(pos, size, func)
-        self.buttonBG = pygame.Rect(self.__pos, self.__size)
-        self.button = pygame.Rect(self.__pos[0] + 2, self.__pos[1] + 2, self.__size[0] - 4, self.__size[1] - 4)
 
-    # def draw(self, screen, font, color1, color2, color3, text):
-    #     pygame.draw.rect(screen, color1, self.buttonBG)
-    #     pygame.draw.rect(screen, color2, self.button)
-    #     # pygame.draw.rect(screen, (0, 128, 255), quit_button)
-    #     text_surface = font.render(text, True, color3)
-    #     text_rect = text_surface.get_rect(center=self.buttonBG.center)
-    #     screen.blit(text_surface, text_rect)
+        self.content = content
+
+        self.border = pygame.Rect(pos, size)
+        self.color = colors.gray_light
+        self.width = 2
+
+        self.DEFAULT_FONT = 'freesansbold.ttf'
+        self.BUTTON_FONT = pygame.font.Font(self.DEFAULT_FONT, 16)
+
+    def render_text(self, screen):
+        text = self.BUTTON_FONT.render(self.content, True, colors.gray_light)
+        text_rect = text.get_rect()
+
+        text_rect.update(self.get_pos(), self.get_size())
+
+        screen.blit(text, text_rect)
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.color, self.border, width=self.width)
+        self.render_text(screen)
 
 # Button having a texture
 class TextureButton(Button):

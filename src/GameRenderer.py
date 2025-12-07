@@ -328,6 +328,80 @@ class GameRenderer:
     def get_hex_cache_count(self):
         return len(self.hex_cache)
 
+    def draw_entire_map_separate(self, hex_map : HexMap.HexMap):
+        tile_size = (64, 64)
+
+        map_size = (hex_map.dimensions[0] // 2 * (tile_size[0] * 3 // 2) + tile_size[0] // 4,
+                    hex_map.dimensions[1] * tile_size[1] + tile_size[1] // 2)
+
+        map_surf = pygame.Surface(map_size, pygame.SRCALPHA)
+
+        # Custom draw tile function used only for this method
+        def __draw_tile(self, tile : Hex.Hex, map_surf : pygame.Surface):
+            # Skip non-existing tiles
+            if not tile:
+                return
+
+            # Change the inner color of the tile
+            temp_hex_surface = self.find_hex_by_color(self.color_scheme[tile.owner])
+
+            # Only generate new surface when needed
+            if not temp_hex_surface:
+                temp_hex_surface = self.add_hex_color(self.color_scheme[tile.owner])
+
+            temp_hex_surface = pygame.transform.scale_by(temp_hex_surface, 1)
+
+            # Draw the lack of tile
+            if tile.owner == -1:
+                temp_hex_surface = temp_hex_surface.copy()
+                # If a background is loaded, use that
+                if self.background_surface:
+                    temp_hex_surface.blit(self.background_surface, (0, 0), area=None, special_flags=pygame.BLEND_RGBA_MULT)
+                # No background loaded, use the color
+                else:
+                    temp_hex_surface.fill((255,255,255,0), special_flags=pygame.BLEND_RGBA_ADD)
+                    temp_hex_surface.fill(self.background_color, special_flags=pygame.BLEND_RGBA_MULT)
+
+            else:
+                # Load tile doodad surface
+                temp_doodad_surface = None
+                doodad = tile.get_doodad()
+                if doodad:
+                    temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
+
+                    if not temp_doodad_surface and doodad.get_name():
+                        self.load_doodad_surface(doodad.get_name(), doodad.get_type(), 1)
+                        temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
+
+                    temp_doodad_surface = pygame.transform.scale_by(temp_doodad_surface, 1)
+
+            # Render the hex on the chunk surface
+            # Calculate the position of the hex before rendering
+            hex_size = (self.hex_surface_basic_size[0] * 1, self.hex_surface_basic_size[1] * 1)
+
+            (tile_x, tile_y) = tile.position
+
+            tile_offset_x = tile_x
+
+            tile_y *= hex_size[1]
+            tile_x *= hex_size[0]
+            tile_x -= hex_size[0] * tile_offset_x // 4
+
+            # Lower the hexagons on the odd positions
+            if tile.position[0] % 2 == 1:
+                tile_y += hex_size[1] // 2
+
+            map_surf.blit(temp_hex_surface, (tile_x, tile_y))
+            if tile.owner != -1 and temp_doodad_surface:
+                map_surf.blit(temp_doodad_surface, (tile_x, tile_y))
+
+        # Process all tiles
+        for row in hex_map.hexmap:
+            for tile in row:
+                __draw_tile(self, tile, map_surf)
+
+        return map_surf
+
     # Draw one tile to the screen
     def draw_tile(self, tile : Hex.Hex, new_color : tuple[int, int, int], chunk_surf : pygame.Surface):
         # Skip non-existing tiles
@@ -398,7 +472,6 @@ class GameRenderer:
         self.hexmap = hexmap
 
         map_size = hexmap.dimensions
-        # print(map_size)
 
         tile_temp = self.visible_chunks[0][0]
 
@@ -406,8 +479,6 @@ class GameRenderer:
 
         end_visible_size = (clamp(len(self.visible_chunks[0]) * self.chunk_size[0], 0, map_size[0]),
                             clamp(len(self.visible_chunks) * self.chunk_size[1], 0, map_size[1]))
-
-        # print(f"load positions: {start_visible_size} , {end_visible_size}")
 
         for y in range(start_visible_size[1], clamp(start_visible_size[1] + end_visible_size[1], 0, map_size[1])):
             for x in range(start_visible_size[0], clamp(start_visible_size[0] + end_visible_size[0], 0, map_size[0])):
@@ -424,8 +495,6 @@ class GameRenderer:
         new_chunks = []
         if not self.chunks[0][0]:
             return
-
-        # print("NEW CHUNKS")
 
         chunk_size = (int(self.chunks[0][0].surface_size[0] * self.cached_zoom), int(self.chunks[0][0].surface_size[1] * self.cached_zoom))
         (pos_x_1, pos_y_1) = self.camera.get_corner_position()
@@ -445,8 +514,6 @@ class GameRenderer:
 
         max_pos = (len(self.chunks[0]), len(self.chunks))
 
-        # print(f"camera index = {pos_1_x} , {pos_1_y} ; {pos_2_x} , {pos_2_y}")
-
         # Clamp the positions to map size
         pos_1_x = clamp(pos_1_x - 1, 0, max_pos[0])
         pos_2_x = clamp(pos_2_x, 0, max_pos[0])
@@ -459,7 +526,6 @@ class GameRenderer:
             new_chunks.append([])
             for x in range(pos_1_x, clamp(pos_2_x + 1, 0, max_pos[0])):
                 current_chunk = self.chunks[y][x] 
-                # print("Chunk", (x, y))
 
                 # Create surface for the new chunk
                 new_chunks[index].append(current_chunk)
@@ -477,9 +543,6 @@ class GameRenderer:
                         break
 
         if different_lists:
-            # print("DIFFERENT")
-            # print(f"{len(new_chunks)} x {len(new_chunks[0])}")
-
             # Delete the chunks no longer seen
             del_chunks = []
             for row in self.visible_chunks:
@@ -496,7 +559,6 @@ class GameRenderer:
                     if not found_chunk:
                         del_chunks.append(new_chunk)
 
-            # print(f"to delete : {len(del_chunks)}")
             self.delete_chunks(del_chunks)
 
             # Draw the chunks seen
@@ -505,7 +567,6 @@ class GameRenderer:
             for row in new_chunks:
                 for chunk in row:
                     if chunk.chunk_surface == None:
-                        # print("Create new surface")
                         new_chunk_size = (chunk.surface_size[0] * self.cached_zoom, chunk.surface_size[1] * self.cached_zoom)
                         chunk.chunk_surface = pygame.Surface(new_chunk_size, pygame.SRCALPHA)
 
@@ -517,12 +578,8 @@ class GameRenderer:
     def delete_chunks(self, chunks : list[HexChunk]):
         for ch in chunks:
             if isinstance(ch, HexChunk) and ch.chunk_surface:
-                # print(f"delete chunk of position: {ch.start_position}")
                 del ch.chunk_surface
                 ch.chunk_surface = None
-            else:
-                pass
-                # print(f"what is this?? {ch.start_position}")
         chunks.clear()
 
     # Delete all visible chunks

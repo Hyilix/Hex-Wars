@@ -112,6 +112,9 @@ def select_doodad_grave(editor, button):
     select_doodad(editor, button)
     editor.change_doodad(Doodads.Grave())
 
+# Menu buttons
+
+
 # Auxiliary functions
 def select_doodad(editor, button):
     deselect_doodads(editor.worldtab)
@@ -262,3 +265,11 @@ def load_world_buttons():
     buttons.append(grave1)
 
     return buttons
+
+def load_menu_buttons():
+    buttons : list[button.Button] = []
+
+    # lobby = button.SimpleButton((), ())
+
+    return buttons
+
