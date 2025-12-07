@@ -58,6 +58,7 @@ class InfoHelp(InfoTab):
                                 "Ctrl + s -> opens/closes save screen",
                                 "Ctrl + Shift + s -> saves the map under the current name",
                                 "Ctrl + l -> opens/closes load screen",
+                                "Ctrl + m -> opens/closes map size screen",
                                 "Esc -> close any info screen"]
 
         self.text_surface = None
@@ -194,4 +195,58 @@ class InfoLoad(InfoTab):
             map_name = map_name[:-1]
 
         return map_name
+
+# Prompts the size of the map
+class InfoMap(InfoTab):
+    def __init__(self, text_pos : tuple[int, int]):
+        super().__init__(text_pos)
+
+        self.str_list : list[str] = ["Map size: ",
+                                     "Enter map size below:"]
+
+        self.lock_keyboard = False
+
+        self.text_surface = None
+
+    def render_text(self, screen, map_size):
+        if self.text_surface != None:
+            del self.text_surface
+
+        self.text_surface = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
+
+        x = self.text_pos[0]
+        y = self.text_pos[1]
+
+        for line in self.str_list:
+            text = self.font.render(line, True, colors.white)
+            text_rect = text.get_rect()
+
+            text_rect.x = x
+            text_rect.y = y
+
+            y += text_rect.height * 2
+
+            self.text_surface.blit(text, text_rect)
+
+        text = self.font.render(map_size, True, colors.white)
+        text_rect = text.get_rect()
+
+        text_rect.x = x
+        text_rect.y = y
+
+        self.text_surface.blit(text, text_rect)
+
+    def render_with_name(self, screen, map_size):
+        if self.to_render():
+            super().render(screen)
+            self.render_text(screen, map_size)
+            screen.blit(self.text_surface, (0, 0))
+
+    def add_key(self, unicode, key, map_size : str):
+        if key != pygame.K_BACKSPACE:
+            map_size += unicode
+        else:
+            map_size = map_size[:-1]
+
+        return map_size
 

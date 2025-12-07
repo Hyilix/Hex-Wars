@@ -175,6 +175,9 @@ class Editor:
 
         self.__screen_size = screen_size
 
+        # The map size, written in string
+        self.__map_size = str(hex_map.dimensions[0]) + "x" + str(hex_map.dimensions[1])
+
         self.__config = {
                 "Hash": 0,
                 "Name": self.__map_name,
@@ -207,9 +210,34 @@ class Editor:
         self.help_info = InfoTabs.InfoHelp((screen_size[0] // 12, screen_size[1] // 12))
         self.save_info = InfoTabs.InfoSave((screen_size[0] // 12, screen_size[1] // 12))
         self.load_info = InfoTabs.InfoLoad((screen_size[0] // 12, screen_size[1] // 12))
+        self.map_info = InfoTabs.InfoMap((screen_size[0] // 12, screen_size[1] // 12))
 
     def is_blocked(self):
         return self.__is_blocked
+
+    # Convert from string to pair of ints
+    def __map_size_from_str(self, map_size : str):
+        if map_size.count('x') == 1:
+            width, height = map(int, map_size.split('x'))
+            return (int(width), int(height))
+        else:
+            print("Invalid map size format")
+            return None
+
+    def change_map_dimensions(self):
+        new_dims = self.__map_size_from_str(self.__map_size)
+
+        if new_dims == None:
+            return
+
+        print("Changing map dimension")
+
+        del self.__hex_map
+
+        self.__hex_map = HexMap.HexMap(new_dims[0], new_dims[1], 0)
+        self.__renderer.reload_renderer(self.__hex_map)
+
+        pygame.event.post(pygame.event.Event(Events.MAP_CHANGED))
 
     # Load a game and save the game configuration
     def load_game(self):
@@ -266,6 +294,7 @@ class Editor:
         self.help_info.render(screen)
         self.save_info.render_with_name(screen, self.__config.get("Name"))
         self.load_info.render_with_name(screen, self.__config.get("Name"))
+        self.map_info.render_with_name(screen, self.__map_size)
 
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
         if self.__is_blocked:
@@ -303,6 +332,8 @@ class Editor:
                 self.save_info.toggle_render()
             if self.load_info.to_render():
                 self.load_info.toggle_render()
+            if self.map_info.to_render():
+                self.map_info.toggle_render()
 
             self.__is_blocked = False
 
@@ -314,6 +345,9 @@ class Editor:
             if self.load_info.to_render():
                 self.load_game()
                 self.load_info.toggle_render()
+            if self.map_info.to_render():
+                self.change_map_dimensions()
+                self.map_info.toggle_render()
 
             self.__is_blocked = False
 
@@ -331,17 +365,22 @@ class Editor:
                         self.__switch_tab_visility()
 
                 if key_pressed == pygame.K_h:
-                    if not self.save_info.to_render() and not self.load_info.to_render():
+                    if not self.save_info.to_render() and not self.load_info.to_render() and not self.map_info.to_render():
                         self.help_info.toggle_render()
                         self.__is_blocked = self.help_info.to_render()
 
                 if key_pressed == pygame.K_l:
-                    if not self.help_info.to_render() and not self.save_info.to_render():
+                    if not self.help_info.to_render() and not self.save_info.to_render() and not self.map_info.to_render():
                         self.load_info.toggle_render()
                         self.__is_blocked = self.load_info.to_render()
 
+                if key_pressed == pygame.K_m:
+                    if not self.help_info.to_render() and not self.save_info.to_render() and not self.load_info.to_render():
+                        self.map_info.toggle_render()
+                        self.__is_blocked = self.map_info.to_render()
+
                 if key_pressed == pygame.K_s and keyboardstate.is_shift_hold == False:
-                    if not self.help_info.to_render() and not self.load_info.to_render():
+                    if not self.help_info.to_render() and not self.load_info.to_render() and not self.map_info.to_render():
                         self.save_info.toggle_render()
                         self.__is_blocked = self.save_info.to_render()
 
@@ -361,6 +400,13 @@ class Editor:
 
                     if new_name != None:
                         self.__config["Name"] = new_name
+
+            if self.map_info.to_render():
+                if keyboardstate.unicode != None and keyboardstate.key_pressed != None and keyboardstate.key_is_down == True:
+                    new_size = self.map_info.add_key(keyboardstate.unicode, keyboardstate.key_pressed, self.__map_size)
+
+                    if new_size != None:
+                        self.__map_size = new_size
 
     def handle_action_handler(self, to_undo : bool):
         if to_undo:
