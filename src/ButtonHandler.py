@@ -12,10 +12,9 @@ def open_menu(editor, button):
     # TODO: Menu
     pass
 
-def select_picker(editor, button):
-    # TODO: picker
-    deselect_all(editor.utiltab)
-    select_this(button)
+# def select_picker(editor, button):
+#     deselect_all(editor.utiltab)
+#     select_this(button)
 
 def select_fill(editor, button):
     deselect_all(editor.utiltab)
@@ -36,7 +35,17 @@ def select_pen(editor, button):
 # Misc buttons
 
 def change_brush(editor, button):
-    pass
+    min_brush = 1
+    max_brush = 10
+
+    brush = min_brush + int(button.slider_progress / 100 * (max_brush - min_brush))
+    print(f"new brush size: {brush}, {button.content}")
+
+    first, second = button.content.split(':')
+
+    button.content = first + ": " + str(brush)
+
+    editor.brush.change_size(brush)
 
 def center_world(editor, button):
     pygame.event.post(pygame.event.Event(Events.CENTER_CAMERA))
@@ -118,9 +127,6 @@ def select_doodad_grave(editor, button):
     select_doodad(editor, button)
     editor.change_doodad(Doodads.Grave())
 
-# Menu buttons
-
-
 # Auxiliary functions
 def select_doodad(editor, button):
     deselect_doodads(editor.worldtab)
@@ -132,7 +138,8 @@ def select_owner(editor, button):
 
 def deselect_all(tab):
     for button in tab.get_buttons():
-        button.set_highlight(False)
+        if button.is_highlighted:
+            button.set_highlight(False)
 
 def deselect_owners(tab):
     for button in tab.get_buttons():
@@ -184,9 +191,9 @@ def load_misc_buttons():
     center = button.TextureButton((0, 0), (196, 64), center_world)
     center.load_texture(DEFAULT_UI_PATH + "center/Center.png")
     buttons.append(center)
-    #
-    # brush = button.SliderButton((0, 0), (196, 64), change_brush)
-    # buttons.append(brush)
+
+    brush = button.SliderButton((0, 0), (196, 64), "Brush: 1",change_brush)
+    buttons.append(brush)
 
     return buttons
 

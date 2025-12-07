@@ -4,6 +4,9 @@ import pygame
 
 import colors
 import Collisions_2d
+from utils import clamp
+
+DEFAULT_FONT_PATH = "../assets/fonts/"
 
 # Super class for all types of buttons
 class Button:
@@ -11,6 +14,8 @@ class Button:
         self.__pos = pos
         self.__size = size
         self.__function = func
+
+        self.is_highlighted = None
 
     def change_pos(self, new_pos : tuple[int, int]):
         self.__pos = new_pos
@@ -50,14 +55,14 @@ class SimpleButton(Button):
         self.width = 2
 
         self.DEFAULT_FONT = 'freesansbold.ttf'
-        self.BUTTON_FONT = pygame.font.Font(self.DEFAULT_FONT, 16)
+        self.button_font = pygame.font.Font(self.DEFAULT_FONT, 16)
 
     def change_pos(self, new_pos: tuple[int, int]):
         super().change_pos(new_pos)
         self.border.topleft = new_pos
 
     def render_text(self, screen):
-        text = self.BUTTON_FONT.render(self.content, True, colors.gray_light)
+        text = self.button_font.render(self.content, True, colors.gray_light)
         text_rect = text.get_rect()
 
         text_rect.update(self.get_pos(), self.get_size())
@@ -73,7 +78,7 @@ class TextureButton(Button):
     def __init__(self, pos : tuple[int, int], size : tuple[int, int], func = None):
         super().__init__(pos, size, func)
 
-        self.__is_highlighted = False
+        self.is_highlighted = False
         self.__is_doodad = False
 
         # Information about button texture (including highlight)
@@ -98,14 +103,14 @@ class TextureButton(Button):
 
     def draw(self, screen):
         screen.blit(self.__texture, self.get_pos())
-        if self.__is_highlighted:
+        if self.is_highlighted:
             pygame.draw.rect(screen, colors.yellow, self.__highlight, width=self.__highlight_width)
 
     def toggle_highlight(self):
-        self.__is_highlighted = not self.__is_highlighted
+        self.is_highlighted = not self.is_highlighted
 
     def set_highlight(self, is_highlight : bool = False):
-        self.__is_highlighted = is_highlight
+        self.is_highlighted = is_highlight
 
 # Button having a slider
 class SliderButton(Button):
@@ -114,12 +119,53 @@ class SliderButton(Button):
 
         self.content = content
 
-        self.__border_color = colors.gray_light
+        self.__border = pygame.Rect(pos, size)
+        self.__border_color = colors.ui_gray
+
+        self.__slider = pygame.Rect(pos, (16, size[1]))
         self.__slider_color = colors.gray_light
 
-        self.__border_width = 2
+        self.__border_width = 4
 
         # 0-100 procent of fill
-        self.__slider_progress = 0
+        self.slider_progress = 0
 
+        self.default_font = DEFAULT_FONT_PATH + 'Orbitron.ttf'
+        self.button_font = pygame.font.Font(self.default_font, 30)
+
+    def change_progress(self, new_progress):
+        self.slider_progress = clamp(new_progress, 0, 100)
+        self.__slider.left = self.__border.left + int(self.slider_progress / 100 * (self.__border.width - self.__slider.width))
+
+    def change_pos(self, new_pos: tuple[int, int]):
+        super().change_pos(new_pos)
+        self.__border.topleft = new_pos
+        self.__slider.topleft = new_pos
+
+    def render_text(self, screen):
+        text = self.button_font.render(self.content, True, colors.ui_gray)
+        text_rect = text.get_rect()
+
+        text_rect.center = self.__border.center
+
+        screen.blit(text, text_rect)
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, self.__border_color, self.__border, width=self.__border_width)
+        self.render_text(screen)
+        pygame.draw.rect(screen, self.__slider_color, self.__slider)
+
+    def check_mouse_collision(self, mouse_pos: tuple[int, int]):
+        is_mouse_inside = super().check_mouse_collision(mouse_pos)
+
+        if is_mouse_inside:
+            start_pos = self.__border.left
+            end_pos = self.__border.left + self.__border.width - self.__slider.width
+            distance = end_pos - start_pos
+
+            mouse_progress = mouse_pos[0] - start_pos
+
+            self.change_progress(int(mouse_progress / distance * 100))
+
+        return is_mouse_inside
 
