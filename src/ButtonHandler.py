@@ -3,14 +3,14 @@ import pygame
 import Events
 import button
 import Doodads
+import GameHandler
 
 DEFAULT_UI_PATH = "../assets/ui/editor/"
 
 # Button functions
 # Main buttons
 def open_menu(editor, button):
-    # TODO: Menu
-    pass
+    GameHandler.GameHandler().switch_tab(GameHandler.CurrentTab.MAINMENU)
 
 # def select_picker(editor, button):
 #     deselect_all(editor.utiltab)
@@ -39,10 +39,8 @@ def change_brush(editor, button):
     max_brush = 10
 
     brush = min_brush + int(button.slider_progress / 100 * (max_brush - min_brush))
-    print(f"new brush size: {brush}, {button.content}")
 
     first, second = button.content.split(':')
-
     button.content = first + ": " + str(brush)
 
     editor.brush.change_size(brush)

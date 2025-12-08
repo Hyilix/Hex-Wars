@@ -328,6 +328,9 @@ class GameRenderer:
     def get_hex_cache_count(self):
         return len(self.hex_cache)
 
+    def get_color_scheme(self):
+        return self.color_scheme
+
     def get_map_center(self, hexmap : HexMap.HexMap):
         map_size = (int(hexmap.dimensions[0] // 2 * (self.hex_surface_basic_size[0] * 3 // 2 * self.cached_zoom)
                     + self.hex_surface_basic_size[0] * self.cached_zoom // 4),

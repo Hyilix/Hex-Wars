@@ -181,7 +181,7 @@ class Editor:
         self.__hex_map = hex_map
 
         self.__map_name = "New Map"
-        self.__players = []
+        self.__players = [None, None, None, None, None, None]
         self.__current_player = 0
 
         self.__screen_size = screen_size
@@ -266,6 +266,8 @@ class Editor:
             self.__renderer.reload_renderer(self.__hex_map)
             self.__map_size = self.__map_size_to_str(self.__hex_map.dimensions)
 
+            self.action_handler.deep_clear()
+
             pygame.event.post(pygame.event.Event(Events.MAP_CHANGED))
 
     def get_editor_map(self):
@@ -290,8 +292,58 @@ class Editor:
 
         self.action_handler.add_action_list(action_list)
 
+        state_action_list = ActionHandler.ActionList([])
+
+        if len(tile_list) > 0:
+            self.state_handling(tile_list, state_action_list)
+
+        self.action_handler.extend_last_list(state_action_list)
+
         self.__renderer.update_list_chunks(tile_list)
         tile_list = []
+
+    def state_handling(self, tile_list : list[Hex.Hex], action_list):
+        owner = tile_list[0].owner
+        if owner <= 0:
+            return
+
+        new_state = State.State(owner, tile_list[0])
+
+        # new_state.hex_march(self.__hex_map)
+
+        for i in range(1, len(tile_list)):
+            new_state.add_hex(tile_list[i])
+
+        if not new_state.is_state_valid():
+            hex_neighbors = self.__hex_map.get_hex_all_neighbors(new_state.get_central_hex())
+
+            for neighbor in hex_neighbors:
+                if neighbor.owner == owner:
+                    new_state.add_hex(neighbor)
+                    break
+
+                # No neighbor found, no valid state
+                new_state.get_central_hex().set_central_hex_status(False)
+                new_state = None
+                return
+
+        if self.__players[owner] != None:
+            pass
+        else:
+            print("We have new player")
+            new_state.hex_march(self.__hex_map)
+            new_player = Player.Player(owner, self.__renderer.get_color_scheme()[owner])
+
+            self.__players[owner] = new_player
+            self.__players[owner].add_state(new_state)
+
+            tile = new_state.get_central_hex()
+            action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                    copy.deepcopy(tile.doodad), copy.deepcopy(Doodads.TownCenter(owner)),
+                                    'doodad', tile))
+            action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.PLAYER,
+                                    None, copy.deepcopy(new_player),
+                                    owner, self.__players))
 
     def make_new_action_list(self):
         self.__current_action_list = ActionHandler.ActionList([])

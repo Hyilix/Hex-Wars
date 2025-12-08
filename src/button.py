@@ -123,7 +123,7 @@ class SliderButton(Button):
         self.__border_color = colors.ui_gray
 
         self.__slider = pygame.Rect(pos, (16, size[1]))
-        self.__slider_color = colors.gray_light
+        self.__slider_color = colors.ui_gray
 
         self.__border_width = 4
 

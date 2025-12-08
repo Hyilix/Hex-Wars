@@ -50,7 +50,7 @@ while running:
         elif event.type == pygame.MOUSEBUTTONDOWN:
             # Camera panning on R_CLICK
             if event.button == 3:
-                game_handler.set_camera_pan_pivot(pygame.mouse.get_pos())
+                game_handler.set_camera_pan_pivot()
                 game_handler.set_camera_panning_mode(True)
 
         elif event.type == pygame.MOUSEBUTTONUP:

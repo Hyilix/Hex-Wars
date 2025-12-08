@@ -4,16 +4,20 @@ from enum import Enum
 class ActionType(Enum):
     TILE = 100
     MONEY = 200
+    PLAYER = 300
 
 # Action class to hold an independent action
 class Action:
-    def __init__(self, action_type : ActionType, last_value, new_value, target : str, owner : object):
+    def __init__(self, action_type : ActionType, last_value, new_value, target, owner : object | list):
         self.__action_type = action_type
         self.__last_value = last_value
         self.__new_value = new_value
 
-        if target.startswith('__') and not target.endswith('__'):
-            self.__target = f'_{owner.__class__.__name__}{target}'
+        if type(target) is str:
+            if target.startswith('__') and not target.endswith('__'):
+                self.__target = f'_{owner.__class__.__name__}{target}'
+            else:
+                self.__target = target
         else:
             self.__target = target
 
@@ -23,10 +27,16 @@ class Action:
         return (self.__action_type, self.__last_value, self.__new_value, self.__target, self.__owner)
 
     def apply_action(self):
-        setattr(self.__owner, self.__target, self.__new_value)
+        try:
+            setattr(self.__owner, self.__target, self.__new_value)
+        except:
+            self.__owner[self.__target] = self.__new_value
 
     def undo_action(self):
-        setattr(self.__owner, self.__target, self.__last_value)
+        try:
+            setattr(self.__owner, self.__target, self.__last_value)
+        except:
+            self.__owner[self.__target] = self.__last_value
 
 # Class to hold a list of Actions
 class ActionList:
@@ -64,10 +74,19 @@ class History:
             del elem
         queue.clear()
 
+    def deep_clear(self):
+        self.__deep_clear_queue(self.__history)
+        self.__deep_clear_queue(self.__undo)
+
     def add_action_list(self, action : ActionList):
         if action.is_list_empty() == False:
             self.__history.append(action)
             self.__deep_clear_queue(self.__undo)
+            action.apply_actions()
+
+    def extend_last_list(self, action : ActionList):
+        if action.is_list_empty() == False:
+            self.__history[0].combine_action_lists(action)
             action.apply_actions()
 
     def undo_last_action(self):

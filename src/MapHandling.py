@@ -3,6 +3,7 @@ import datetime
 from typing import dataclass_transform
 import pytz
 import os
+import shutil
 
 import HexMap
 import Hex
@@ -50,14 +51,11 @@ def __make_next_dir(new_path : str):
     dir_path = str(new_path)
     dir_path = dir_path[:-1]
     # Find the next duplicate in limit
-    for i in range(MAX_DUPLICATE_FILE):
-        save_path = str(dir_path)
-        if i > 0:
-            save_path += "(" + str(i) + ")"
+    save_path = str(dir_path)
 
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-            return save_path
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+        return save_path
 
     return None
 
@@ -91,7 +89,16 @@ def save_game(config : dict, save_name = None):
 
     if (dir_path == None):
         print("No directory file could be created")
-        return
+
+        # File already found, rewrite it
+        print(new_path)
+        if os.path.exists(new_path):
+            os.remove(new_path)
+            dir_path = __make_next_dir(new_path)
+        else:
+            print("Something went wrong")
+            # Something went wrong
+            return
 
     dir_path += "/"
 
@@ -151,7 +158,16 @@ def save_map(config : dict, renderer):
 
     if (dir_path == None):
         print("No directory file could be created")
-        return
+
+        # File already found, rewrite it
+        print(new_path)
+        if os.path.exists(new_path):
+            shutil.rmtree(new_path)
+            dir_path = __make_next_dir(new_path)
+        else:
+            print("Something went wrong")
+            # Something went wrong
+            return
 
     map_hash = __get_hash(map_name)
     info_file_path = dir_path + "/" + DEFAULT_INFO_NAME + DEFAULT_INFO_SUFFIX

@@ -21,5 +21,17 @@ class Player:
         return self.states
 
     def add_state(self, state : State):
-        self.states.append(state)
+        if state.is_state_valid():
+            self.states.append(state)
+        else:
+            state.get_central_hex().set_central_hex_status(False)
+            state = None
+
+    def state_includes_tile(self, hexmap : HexMap.HexMap ,tile : Hex.Hex, excluded_state : State):
+        for state in self.states:
+            if state.state_contains_tile(tile) and state != excluded_state:
+                # Found another state. Merge with it
+                state.hex_march(hexmap)
+                excluded_state = None
+                return
 
