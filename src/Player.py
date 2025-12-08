@@ -27,11 +27,21 @@ class Player:
             state.get_central_hex().set_central_hex_status(False)
             state = None
 
-    def state_includes_tile(self, hexmap : HexMap.HexMap ,tile : Hex.Hex, excluded_state : State):
+    def find_state_by_central(self, central_hex : Hex.Hex):
         for state in self.states:
-            if state.state_contains_tile(tile) and state != excluded_state:
-                # Found another state. Merge with it
-                state.hex_march(hexmap)
-                excluded_state = None
+            if state.get_central_hex() == central_hex:
+                return state
+        return None
+
+    def remove_state_by_central(self, central_hex):
+        for state in self.states:
+            if state.get_central_hex() == central_hex:
+                self.states.remove(state)
                 return
+
+    def state_includes_tile(self, tile : Hex.Hex):
+        for state in self.states:
+            if state.state_contains_tile(tile):
+                return state
+        return None
 

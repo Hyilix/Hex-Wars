@@ -57,18 +57,24 @@ class State:
         hexqueue.append(self.central_hex)
         visited = [self.central_hex]
 
+        other_central_hexes = []
+
         # Search all the hexes for a state
         while hexqueue:
             current = hexqueue.popleft()
             neighbors = hexmap.get_hex_all_neighbors(current)
             for tile in neighbors:
-                if tile.get_owner() == self.owner and tile not in visited:
+                if tile and tile.get_owner() == self.owner and tile not in visited:
                     hexqueue.append(tile)
                     visited.append(tile)
+                    if tile.get_central_hex_status() and tile != self.central_hex:
+                        other_central_hexes.append(tile)
 
         # Copy the visited hexes onto the state_hexes
         if self.is_state_valid():
             self.state_hexes = visited[:]
+
+        return other_central_hexes
 
     # Add a hex to the state_hexes
     def add_hex(self, tile : Hex):

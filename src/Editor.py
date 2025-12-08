@@ -167,7 +167,7 @@ class Brush:
             # Set new doodad
             if self.__owner >= 0:
                 if tile.doodad == None or self.__doodad == None or tile.doodad.get_name() != self.__doodad.get_name():
-                    if tile.doodad != self.__doodad:
+                    if tile.doodad != self.__doodad and (tile.doodad == None or tile.doodad.get_name() != "Base"):
                         action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(tile.doodad), copy.deepcopy(self.__doodad), 'doodad', tile))
                         if tile not in tile_list:
                             tile_list.append(tile)
@@ -239,6 +239,7 @@ class Editor:
     def __map_size_to_str(self, map_size : tuple[int, int]):
         return str(map_size[0]) + 'x' + str(map_size[1])
 
+    # Change map dimension and fire event to change hexmap
     def change_map_dimensions(self):
         new_dims = self.__map_size_from_str(self.__map_size)
 
@@ -277,32 +278,44 @@ class Editor:
     def save_game(self):
         MapHandling.save_map(self.__config, self.__renderer)
 
+    # Change the owner used for the brush
     def change_owner(self, new_owner):
         self.brush.change_owner(new_owner)
 
+    # Change the doodad used for the brush
     def change_doodad(self, new_doodad):
         self.brush.change_doodad(new_doodad)
 
+    # Change the fill used for the brush
     def set_fill(self, fill : bool):
         self.brush.change_fill(fill)
 
+    # Apply brush to the map
     def apply_brush(self, start_hex : Hex.Hex):
         tile_list : list[Hex.Hex] = []
         action_list = self.brush.apply_brush(self.__hex_map, start_hex, tile_list)
 
         self.action_handler.add_action_list(action_list)
 
+        # Make new action list to put the towncenter and the player
         state_action_list = ActionHandler.ActionList([])
 
+        modified_tiles = []
+
         if len(tile_list) > 0:
-            self.state_handling(tile_list, state_action_list)
+            modified_tiles = self.__state_handling(tile_list, state_action_list)
 
         self.action_handler.extend_last_list(state_action_list)
+
+        if modified_tiles:
+            tile_list.extend(modified_tiles)
 
         self.__renderer.update_list_chunks(tile_list)
         tile_list = []
 
-    def state_handling(self, tile_list : list[Hex.Hex], action_list):
+    # Build the states that are being drawn
+    def __state_handling(self, tile_list : list[Hex.Hex], action_list):
+        modified_tiles = []
         owner = tile_list[0].owner
         if owner <= 0:
             return
@@ -314,36 +327,90 @@ class Editor:
         for i in range(1, len(tile_list)):
             new_state.add_hex(tile_list[i])
 
+        # Check if there can be a state
         if not new_state.is_state_valid():
             hex_neighbors = self.__hex_map.get_hex_all_neighbors(new_state.get_central_hex())
+
+            found_neighbor = False
 
             for neighbor in hex_neighbors:
                 if neighbor.owner == owner:
                     new_state.add_hex(neighbor)
+                    found_neighbor = True
                     break
 
-                # No neighbor found, no valid state
+            # No neighbor found, no valid state
+            if not found_neighbor:
                 new_state.get_central_hex().set_central_hex_status(False)
                 new_state = None
-                return
+                return modified_tiles
 
-        if self.__players[owner] != None:
-            pass
+        # Player found
+        if self.__players[owner - 1] != None:
+            print("Player found")
+            old_central = new_state.get_central_hex()
+
+            # Check if there are any other states around
+            neighbors = []
+            print("searching neighbors for a new tile")
+            self.__hex_map.get_neighbors_around_clump(tile_list, neighbors)
+
+            # # Debug print
+            # for neighbor in neighbors:
+            #     print(f"neighbor position is: {neighbor.get_position()} of owner : {neighbor.owner}")
+
+            for neighbor in neighbors:
+                other_state = self.__players[owner - 1].state_includes_tile(neighbor)
+
+                print(f"other_state = {other_state}")
+
+                if other_state:
+                    print(f"Found another state, {other_state.get_central_hex().get_position()}")
+                    old_central.set_central_hex_status(False)
+                    other_centers = other_state.hex_march(self.__hex_map)
+
+                    # Remove the merged states
+                    for old_tile in other_centers:
+                        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                    copy.deepcopy(old_tile.doodad), None,
+                                    'doodad', old_tile))
+
+                        modified_tiles.append(old_tile)
+
+                        self.__players[owner - 1].remove_state_by_central(old_tile)
+
+                    new_state = None
+                    return modified_tiles
+
+            # If no other state found, search the contents of this state
+            new_state.hex_march(self.__hex_map)
+
+            action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                    copy.deepcopy(old_central.doodad), copy.deepcopy(Doodads.TownCenter(owner)),
+                                    'doodad', old_central))
+
+            modified_tiles.append(old_central)
+
+            self.__players[owner - 1].add_state(new_state)
+
         else:
+            # No player found, create one
             print("We have new player")
             new_state.hex_march(self.__hex_map)
             new_player = Player.Player(owner, self.__renderer.get_color_scheme()[owner])
-
-            self.__players[owner] = new_player
-            self.__players[owner].add_state(new_state)
+            new_player.add_state(new_state)
 
             tile = new_state.get_central_hex()
             action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
                                     copy.deepcopy(tile.doodad), copy.deepcopy(Doodads.TownCenter(owner)),
                                     'doodad', tile))
             action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.PLAYER,
-                                    None, copy.deepcopy(new_player),
-                                    owner, self.__players))
+                                    None, new_player,
+                                    owner - 1, self.__players))
+
+            modified_tiles.append(tile)
+
+        return modified_tiles
 
     def make_new_action_list(self):
         self.__current_action_list = ActionHandler.ActionList([])
@@ -353,6 +420,7 @@ class Editor:
             self.action_handler.add_action_list(self.__current_action_list)
         self.__current_action_list = None
 
+    # Render everything
     def render_tabs(self, screen):
         if self.__tabs_visible:
             if self.__active_tab == TabMenu.WORLD:
@@ -365,6 +433,7 @@ class Editor:
         self.load_info.render_with_name(screen, self.__config.get("Name"))
         self.map_info.render_with_name(screen, self.__map_size)
 
+    # Handle the mouse input
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
         if self.__is_blocked:
             return
@@ -388,6 +457,7 @@ class Editor:
         self.utiltab.clear_clicked_inside()
         self.worldtab.clear_clicked_inside()
 
+    # Handle the keyboard input
     def handle_keyboard_action(self, screen):
         keyboardstate = KeyboardState.KeyboardState()
         key_pressed = keyboardstate.key_pressed
@@ -478,6 +548,7 @@ class Editor:
                     if new_size != None:
                         self.__map_size = new_size
 
+    # Handle the action handler
     def handle_action_handler(self, to_undo : bool):
         if to_undo:
             self.action_handler.undo_last_action()

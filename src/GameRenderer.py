@@ -613,8 +613,10 @@ class GameRenderer:
             self.draw_tile(tile, color, chunk_surface)
 
     def update_list_chunks(self, tiles : list[Hex.Hex]):
-        for tile in tiles:
-            self.update_chunk(tile)
+        if tiles:
+            for tile in tiles:
+                if tile:
+                    self.update_chunk(tile)
 
     # Draw all chunks to screen
     def draw_chunks(self):

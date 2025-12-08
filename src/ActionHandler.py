@@ -86,7 +86,7 @@ class History:
 
     def extend_last_list(self, action : ActionList):
         if action.is_list_empty() == False:
-            self.__history[0].combine_action_lists(action)
+            self.__history[-1].combine_action_lists(action)
             action.apply_actions()
 
     def undo_last_action(self):
