@@ -20,6 +20,12 @@ class Player:
     def get_states(self):
         return self.states
 
+    def get_owner(self):
+        return self.owner
+
+    def print_no_states(self):
+        print(f"Owner {self.owner} -> Number of states: {len(self.states)}")
+
     def add_state(self, state : State):
         if state.is_state_valid():
             self.states.append(state)

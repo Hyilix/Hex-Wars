@@ -305,6 +305,10 @@ class Editor:
         if len(tile_list) > 0:
             modified_tiles = self.__state_handling(tile_list, state_action_list)
 
+        for player in self.__players:
+            if player:
+                player.print_no_states()
+
         self.action_handler.extend_last_list(state_action_list)
 
         if modified_tiles:
@@ -317,98 +321,162 @@ class Editor:
     def __state_handling(self, tile_list : list[Hex.Hex], action_list):
         modified_tiles = []
         owner = tile_list[0].owner
-        if owner <= 0:
-            return
 
-        new_state = State.State(owner, tile_list[0])
+        # Check if a state is being iterrupted
+        states_checked = []
+        for tile in tile_list:
+            # Find the player that held the tile before
+            for player in self.__players:
+                if not player:
+                    continue
 
-        # new_state.hex_march(self.__hex_map)
+                if player.get_owner() == tile.owner:
+                    continue
 
-        for i in range(1, len(tile_list)):
-            new_state.add_hex(tile_list[i])
+                # Find a state that has the tile
+                state = player.state_includes_tile(tile)
+                if state:
+                    state.remove_hex(tile)
 
-        # Check if there can be a state
-        if not new_state.is_state_valid():
-            hex_neighbors = self.__hex_map.get_hex_all_neighbors(new_state.get_central_hex())
-
-            found_neighbor = False
-
-            for neighbor in hex_neighbors:
-                if neighbor.owner == owner:
-                    new_state.add_hex(neighbor)
-                    found_neighbor = True
-                    break
-
-            # No neighbor found, no valid state
-            if not found_neighbor:
-                new_state.get_central_hex().set_central_hex_status(False)
-                new_state = None
-                return modified_tiles
-
-        # Player found
-        if self.__players[owner - 1] != None:
-            print("Player found")
-            old_central = new_state.get_central_hex()
-
-            # Check if there are any other states around
-            neighbors = []
-            print("searching neighbors for a new tile")
-            self.__hex_map.get_neighbors_around_clump(tile_list, neighbors)
-
-            # # Debug print
-            # for neighbor in neighbors:
-            #     print(f"neighbor position is: {neighbor.get_position()} of owner : {neighbor.owner}")
-
-            for neighbor in neighbors:
-                other_state = self.__players[owner - 1].state_includes_tile(neighbor)
-
-                print(f"other_state = {other_state}")
-
-                if other_state:
-                    print(f"Found another state, {other_state.get_central_hex().get_position()}")
-                    old_central.set_central_hex_status(False)
-                    other_centers = other_state.hex_march(self.__hex_map)
-
-                    # Remove the merged states
-                    for old_tile in other_centers:
+                    if not state.is_state_valid():
+                        print("Preemptly removed invalid state")
+                        child_tile = state.get_central_hex()
                         action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
-                                    copy.deepcopy(old_tile.doodad), None,
-                                    'doodad', old_tile))
+                                                copy.deepcopy(child_tile.doodad), None,
+                                                'doodad', child_tile))
 
-                        modified_tiles.append(old_tile)
+                        player.remove_state_by_central(child_tile)
+                        child_tile.set_central_hex_status(False)
+                        modified_tiles.append(child_tile)
+                        continue
 
-                        self.__players[owner - 1].remove_state_by_central(old_tile)
+                    # Central tile has been removed, select another one
+                    if tile.get_central_hex_status():
+                        new_central = state.find_new_central_hex()
+                        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                                copy.deepcopy(tile.doodad), None,
+                                                'doodad', tile))
+                        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                                copy.deepcopy(new_central.doodad), copy.deepcopy(Doodads.TownCenter(new_central.owner)),
+                                                'doodad', new_central))
 
+                        modified_tiles.append(tile)
+                        modified_tiles.append(new_central)
+
+                    if state not in states_checked:
+                        states_checked.append(state)
+
+        for checked_state in states_checked:
+            child_states = []
+            checked_state.split_state(self.__hex_map, child_states)
+            print(f"Number of child states: {len(child_states)}")
+
+            for child_state in child_states:
+                child_tile = child_state.get_central_hex()
+
+                if not child_state.is_state_valid():
+                    print("Handle an invalid state")
+                    action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                            copy.deepcopy(child_tile.doodad), None,
+                                            'doodad', child_tile))
+
+                    self.__players[child_state.get_owner() - 1].remove_state_by_central(child_tile)
+                    child_tile.set_central_hex_status(False)
+                    modified_tiles.append(child_tile)
+                    continue
+
+                action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                        copy.deepcopy(child_tile.doodad), copy.deepcopy(Doodads.TownCenter(owner)),
+                                        'doodad', child_tile))
+
+                modified_tiles.append(child_tile)
+
+                self.__players[child_state.get_owner() - 1].add_state(child_state)
+
+        for player in self.__players:
+            if player:
+                player.print_no_states()
+
+        # If owner is of a player, handle the states
+        if owner > 0:
+            new_state = State.State(owner, tile_list[0])
+
+            for i in range(1, len(tile_list)):
+                new_state.add_hex(tile_list[i])
+
+            # Check if there can be a state
+            if not new_state.is_state_valid():
+                hex_neighbors = self.__hex_map.get_hex_all_neighbors(new_state.get_central_hex())
+
+                found_neighbor = False
+
+                for neighbor in hex_neighbors:
+                    if neighbor and neighbor.owner == owner:
+                        new_state.add_hex(neighbor)
+                        found_neighbor = True
+                        break
+
+                # No neighbor found, no valid state
+                if not found_neighbor:
+                    new_state.get_central_hex().set_central_hex_status(False)
                     new_state = None
                     return modified_tiles
 
-            # If no other state found, search the contents of this state
-            new_state.hex_march(self.__hex_map)
+            # Player found
+            if self.__players[owner - 1] != None:
+                old_central = new_state.get_central_hex()
 
-            action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
-                                    copy.deepcopy(old_central.doodad), copy.deepcopy(Doodads.TownCenter(owner)),
-                                    'doodad', old_central))
+                # Check if there are any other states around
+                neighbors = []
+                self.__hex_map.get_neighbors_around_clump(tile_list, neighbors)
 
-            modified_tiles.append(old_central)
+                for neighbor in neighbors:
+                    other_state = self.__players[owner - 1].state_includes_tile(neighbor)
 
-            self.__players[owner - 1].add_state(new_state)
+                    if other_state:
+                        old_central.set_central_hex_status(False)
+                        other_centers = other_state.hex_march(self.__hex_map)
 
-        else:
-            # No player found, create one
-            print("We have new player")
-            new_state.hex_march(self.__hex_map)
-            new_player = Player.Player(owner, self.__renderer.get_color_scheme()[owner])
-            new_player.add_state(new_state)
+                        # Remove the merged states
+                        for old_tile in other_centers:
+                            action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                        copy.deepcopy(old_tile.doodad), None,
+                                        'doodad', old_tile))
 
-            tile = new_state.get_central_hex()
-            action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
-                                    copy.deepcopy(tile.doodad), copy.deepcopy(Doodads.TownCenter(owner)),
-                                    'doodad', tile))
-            action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.PLAYER,
-                                    None, new_player,
-                                    owner - 1, self.__players))
+                            modified_tiles.append(old_tile)
 
-            modified_tiles.append(tile)
+                            self.__players[owner - 1].remove_state_by_central(old_tile)
+
+                        new_state = None
+                        return modified_tiles
+
+                # If no other state found, search the contents of this state
+                new_state.hex_march(self.__hex_map)
+
+                action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                        copy.deepcopy(old_central.doodad), copy.deepcopy(Doodads.TownCenter(owner)),
+                                        'doodad', old_central))
+
+                modified_tiles.append(old_central)
+
+                self.__players[owner - 1].add_state(new_state)
+
+            else:
+                # No player found, create one
+                print("We have new player")
+                new_state.hex_march(self.__hex_map)
+                new_player = Player.Player(owner, self.__renderer.get_color_scheme()[owner])
+                new_player.add_state(new_state)
+
+                tile = new_state.get_central_hex()
+                action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                        copy.deepcopy(tile.doodad), copy.deepcopy(Doodads.TownCenter(owner)),
+                                        'doodad', tile))
+                action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.PLAYER,
+                                        None, new_player,
+                                        owner - 1, self.__players))
+
+                modified_tiles.append(tile)
 
         return modified_tiles
 

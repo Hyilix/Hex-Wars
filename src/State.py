@@ -33,8 +33,13 @@ class State:
         if central_hex in self.state_hexes:
             self.central_hex = central_hex
 
+    def find_new_central_hex(self):
+        self.central_hex = self.state_hexes[0]
+        self.state_hexes[0].set_central_hex_status(True)
+        return self.central_hex
+
     # Determine if a hex is inside an estate
-    def is_hex_in_estate(self, tile : Hex):
+    def is_hex_in_state(self, tile : Hex):
         return tile in self.state_hexes
 
     # Update the income of the state
@@ -50,6 +55,9 @@ class State:
         if self.money < 0:
             self.is_bankrupt = True
             self.money = 0
+
+    def set_state_hexes(self, hexes):
+        self.state_hexes = hexes[:]
 
     # Get the hexes of a state starting from the central hex
     def hex_march(self, hexmap : HexMap):
@@ -83,15 +91,34 @@ class State:
     # Remove a hex from the state_hexes
     def remove_hex(self, tile : Hex):
         self.state_hexes.remove(tile)
+        if not self.is_state_valid():
+            print("We are an invalid state")
 
     def state_contains_tile(self, tile : Hex):
         return tile in self.state_hexes
 
     def is_state_valid(self):
         state_valid = len(self.state_hexes) > 1
-
-        # if state_valid:
-        #     self.central_hex.set_central_hex_status(False)
-
         return state_valid
+
+    def split_state(self, hexmap : HexMap, states):
+        former_state = self.state_hexes[:]
+
+        self.hex_march(hexmap)
+
+        for tile in self.state_hexes:
+            if tile in former_state:
+                former_state.remove(tile)
+
+        print(f"Number of hexes left: {len(former_state)}")
+
+        # If there are any tiles left, create and split the states
+        if len(former_state) >= 1:
+            former_state[0].set_central_hex_status(True)
+            new_state = State(self.owner, former_state[0])
+            new_state.set_state_hexes(former_state)
+
+            states.append(new_state)
+
+            new_state.split_state(hexmap, states)
 
