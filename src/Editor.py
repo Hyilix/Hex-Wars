@@ -367,9 +367,21 @@ class Editor:
                         states_checked.append(state)
 
         for checked_state in states_checked:
+            checked_state_tile = checked_state.get_central_hex()
+
             child_states = []
             checked_state.split_state(self.__hex_map, child_states)
+
             print(f"Number of child states: {len(child_states)}")
+            if not checked_state.is_state_valid():
+                print("Handle an invalid state")
+                action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+                                        copy.deepcopy(checked_state_tile.doodad), None,
+                                        'doodad', checked_state_tile))
+
+                self.__players[checked_state.get_owner() - 1].remove_state_by_central(checked_state_tile)
+                checked_state_tile.set_central_hex_status(False)
+                modified_tiles.append(checked_state_tile)
 
             for child_state in child_states:
                 child_tile = child_state.get_central_hex()
