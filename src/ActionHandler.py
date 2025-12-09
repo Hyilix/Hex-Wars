@@ -47,12 +47,24 @@ class ActionList:
         self.__actions.append(action)
 
     def apply_actions(self):
+        tiles_actioned = []
         for action in self.__actions:
             action.apply_action()
 
+            if action.get_action_info()[0] == ActionType.TILE:
+                tiles_actioned.append(action.get_action_info()[-1])
+
+        return tiles_actioned
+
     def undo_actions(self):
+        tiles_actioned = []
         for action in self.__actions:
             action.undo_action()
+
+            if action.get_action_info()[0] == ActionType.TILE:
+                tiles_actioned.append(action.get_action_info()[-1])
+
+        return tiles_actioned
 
     def combine_action_lists(self, other):
         for action in other.__actions:
@@ -93,12 +105,12 @@ class History:
         if self.__history:
             last_action = self.__history.pop()
             self.__undo.append(last_action)
-            last_action.undo_actions()
+            return last_action.undo_actions()
 
     def redo_last_action(self):
         if self.__undo:
             last_action = self.__undo.pop()
             self.__history.append(last_action)
-            last_action.apply_actions()
+            return last_action.apply_actions()
 
 
