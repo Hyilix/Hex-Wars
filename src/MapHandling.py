@@ -194,10 +194,10 @@ def save_map(config : dict, renderer):
         database['Name'] = map_name
 
         # Put the player array to the database
-        database['Players'] = config.get("player_array")
+        database['Players'] = config.get("Players")
 
         # Put current player to the database
-        database['CurrentPlayer'] = config.get("current_player")
+        database['CurrentPlayer'] = config.get("CurrentPlayer")
 
         # Put map array to the database
         database['Map'] = config.get("Map")

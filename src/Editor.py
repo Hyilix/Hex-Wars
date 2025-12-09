@@ -268,9 +268,15 @@ class Editor:
             self.__renderer.reload_renderer(self.__hex_map)
             self.__map_size = self.__map_size_to_str(self.__hex_map.dimensions)
 
+            self.__players = self.__config.get("Players")
+
             self.action_handler.deep_clear()
 
             pygame.event.post(pygame.event.Event(Events.MAP_CHANGED))
+
+    # Save the current game
+    def save_game(self):
+        MapHandling.save_map(self.__config, self.__renderer)
 
     def get_hex_map(self):
         return self.__hex_map
@@ -280,10 +286,6 @@ class Editor:
 
     def get_renderer(self):
         return self.__renderer
-
-    # Save the current game
-    def save_game(self):
-        MapHandling.save_map(self.__config, self.__renderer)
 
     # Change the owner used for the brush
     def change_owner(self, new_owner):
