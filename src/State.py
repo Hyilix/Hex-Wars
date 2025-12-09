@@ -29,6 +29,9 @@ class State:
     def get_central_hex(self):
         return self.central_hex
 
+    def get_state_hexes(self):
+        return self.state_hexes
+
     def set_central_hex(self, central_hex : Hex):
         if central_hex in self.state_hexes:
             self.central_hex = central_hex
@@ -75,12 +78,37 @@ class State:
                 if tile and tile.get_owner() == self.owner and tile not in visited:
                     hexqueue.append(tile)
                     visited.append(tile)
+                    # print("Found new tile in hex march")
                     if tile.get_central_hex_status() and tile != self.central_hex:
                         other_central_hexes.append(tile)
 
         # Copy the visited hexes onto the state_hexes
-        if self.is_state_valid():
-            self.state_hexes = visited[:]
+        self.state_hexes = visited[:]
+
+        return other_central_hexes
+
+    # Search only for tiles in the included_tiles
+    def restrained_hex_march(self, hexmap : HexMap, included_tiles : list[Hex]):
+        hexqueue = deque()
+        hexqueue.append(self.central_hex)
+        visited = [self.central_hex]
+
+        other_central_hexes = []
+
+        # Search all the hexes for a state
+        while hexqueue:
+            current = hexqueue.popleft()
+            neighbors = hexmap.get_hex_all_neighbors(current)
+            for tile in neighbors:
+                if tile and tile.get_owner() == self.owner and tile not in visited and tile in included_tiles:
+                    hexqueue.append(tile)
+                    visited.append(tile)
+                    # print(f"Found new tile in hex march, {tile.get_position()}")
+                    if tile.get_central_hex_status() and tile != self.central_hex:
+                        other_central_hexes.append(tile)
+
+        # Copy the visited hexes onto the state_hexes
+        self.state_hexes = visited[:]
 
         return other_central_hexes
 
