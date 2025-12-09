@@ -23,6 +23,9 @@ class Player:
     def get_owner(self):
         return self.owner
 
+    def has_any_states(self):
+        return len(self.states) > 0
+
     def print_no_states(self):
         print(f"Owner {self.owner} -> Number of states: {len(self.states)}")
 

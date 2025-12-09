@@ -137,7 +137,7 @@ class GameHandler:
             self.draw_editor_tabs()
 
     def set_new_map_editor(self):
-        self.__hex_map = self.__editor.get_editor_map()
+        self.__hex_map = self.__editor.get_hex_map()
 
     def center_camera(self):
         if self.__is_camera_set_up():
