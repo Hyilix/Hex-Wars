@@ -58,7 +58,7 @@ class ActionList:
 
     def undo_actions(self):
         tiles_actioned = []
-        for action in self.__actions:
+        for action in reversed(self.__actions):
             action.undo_action()
 
             if action.get_action_info()[0] == ActionType.TILE:

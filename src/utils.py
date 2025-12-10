@@ -145,7 +145,7 @@ def state_handling(self, tile_list : list[Hex.Hex], action_list):
     # If owner is of a player, handle the states
     tile_list_copy = tile_list[:]
     for tile in tile_list_copy:
-        print("Handle new tile")
+        # print("Handle new tile")
         owner = tile.owner
         if owner > 0:
             new_state = State.State(owner, tile)
@@ -176,7 +176,8 @@ def state_handling(self, tile_list : list[Hex.Hex], action_list):
 
                         # Remove the merged states
                         for old_tile in other_centers:
-                            if action_list:
+                            print(f"Old Tile pos : {old_tile.get_position()}")
+                            if action_list and old_tile.doodad and old_tile.doodad.get_name() == "Base":
                                 action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
                                             copy.deepcopy(old_tile.doodad), None,
                                             'doodad', old_tile))
