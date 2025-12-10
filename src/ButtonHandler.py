@@ -267,10 +267,10 @@ def load_world_buttons():
     tower2.set_doodad_state()
     buttons.append(tower2)
 
-    main_base = button.TextureButton((0, 0), (64, 64), select_doodad_base)
-    main_base.load_texture(DEFAULT_UI_PATH + "world/Base.png")
-    main_base.set_doodad_state()
-    buttons.append(main_base)
+    # main_base = button.TextureButton((0, 0), (64, 64), select_doodad_base)
+    # main_base.load_texture(DEFAULT_UI_PATH + "world/Base.png")
+    # main_base.set_doodad_state()
+    # buttons.append(main_base)
 
     farm = button.TextureButton((0, 0), (64, 64), select_doodad_farm)
     farm.load_texture(DEFAULT_UI_PATH + "world/Farm.png")
