@@ -128,19 +128,36 @@ def __search_checked_states(self, checked_state, action_list, modified_tiles):
 def state_handling(self, tile_list : list[Hex.Hex], action_list):
     modified_tiles = []
 
+    print("Before players")
+    for player in self.get_players():
+        if player:
+            player.print_no_states()
+            for state in player.get_states():
+                print(f"State with central: {state.get_central_hex().get_position()}")
+
     # Check if a state is being iterrupted
     states_checked = []
     for tile in tile_list:
         __check_state_interuption(self, tile, action_list, modified_tiles, states_checked)
+
+    print("Middle players")
+    for player in self.get_players():
+        if player:
+            player.print_no_states()
+            for state in player.get_states():
+                print(f"State with central: {state.get_central_hex().get_position()}")
 
     # Search in checked states for any invalid states
     for checked_state in states_checked:
         __search_checked_states(self, checked_state, action_list, modified_tiles)
 
     # Debug for printing the number of states for each player
+    print("After players")
     for player in self.get_players():
         if player:
             player.print_no_states()
+            for state in player.get_states():
+                print(f"State with central: {state.get_central_hex().get_position()}")
 
     # If owner is of a player, handle the states
     tile_list_copy = tile_list[:]

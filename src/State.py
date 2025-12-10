@@ -34,7 +34,9 @@ class State:
 
     def set_central_hex(self, central_hex : Hex):
         if central_hex in self.state_hexes:
+            self.central_hex.set_central_hex_status(False)
             self.central_hex = central_hex
+            self.central_hex.set_central_hex_status(True)
 
     def find_new_central_hex(self):
         self.central_hex = self.state_hexes[0]
@@ -110,7 +112,10 @@ class State:
         # Copy the visited hexes onto the state_hexes
         self.state_hexes = visited[:]
 
-        return other_central_hexes
+        # if len(other_central_hexes):
+        #     self.central_hex.set_central_hex_status(False)
+        #     self.central_hex = other_central_hexes[0]
+        #     self.central_hex.set_central_hex_status(True)
 
     # Add a hex to the state_hexes
     def add_hex(self, tile : Hex):
@@ -136,6 +141,10 @@ class State:
 
         for tile in self.state_hexes:
             if tile in former_state:
+                if tile.get_central_hex_status() and tile != self.central_hex:
+                    self.central_hex.set_central_hex_status(False)
+                    self.central_hex = tile
+                    self.central_hex.set_central_hex_status(True)
                 former_state.remove(tile)
 
         print(f"Number of hexes left: {len(former_state)}")

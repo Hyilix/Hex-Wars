@@ -5,6 +5,7 @@ class ActionType(Enum):
     TILE = 100
     MONEY = 200
     PLAYER = 300
+    STATE = 301
 
 # Action class to hold an independent action
 class Action:
@@ -28,12 +29,16 @@ class Action:
 
     def apply_action(self):
         try:
+            if self.__target == "is_central_hex":
+                print(f"Apply hex central, {self.__new_value}")
             setattr(self.__owner, self.__target, self.__new_value)
         except:
             self.__owner[self.__target] = self.__new_value
 
     def undo_action(self):
         try:
+            if self.__target == "is_central_hex":
+                print(f"Undo hex central, {self.__last_value}")
             setattr(self.__owner, self.__target, self.__last_value)
         except:
             self.__owner[self.__target] = self.__last_value
@@ -58,7 +63,7 @@ class ActionList:
 
     def undo_actions(self):
         tiles_actioned = []
-        for action in reversed(self.__actions):
+        for action in self.__actions:
             action.undo_action()
 
             if action.get_action_info()[0] == ActionType.TILE:
