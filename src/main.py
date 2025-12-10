@@ -30,12 +30,13 @@ game_handler = GameHandler.GameHandler()
 game_handler.set_screen(screen)
 
 # Set the first tab of the game
-game_handler.switch_tab(GameHandler.CurrentTab.EDITOR)
+game_handler.switch_tab(GameHandler.CurrentTab.MAINMENU)
 
 FPS = 144
 
-running = True
-while running:
+game_handler.start_game()
+
+while game_handler.get_game_running():
     screen.fill(colors.gray_very_dark)  # background color
     game_handler.draw_every_frame()
     keyboard_handled_this_frame = False
@@ -45,7 +46,7 @@ while running:
             game_handler.pan_camera(pygame.mouse.get_pos())
 
         if event.type == pygame.QUIT:
-            running = False
+            game_handler.stop_game()
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             # Camera panning on R_CLICK
@@ -66,6 +67,7 @@ while running:
             if event.button == 1:  # Left mouse button
                 keyboard_state.parse_mouse_state(1, True)
                 game_handler.editor_handle_mouse_action(pygame.mouse.get_pos(), True)
+                game_handler.menu_handle_mouse_action(pygame.mouse.get_pos(), True)
 
             if event.button == 2:
                 keyboard_state.parse_mouse_state(2, True)
@@ -80,6 +82,7 @@ while running:
         if event.type == pygame.MOUSEMOTION:
             if keyboard_state.is_mouse1_down:
                 game_handler.editor_handle_mouse_action(pygame.mouse.get_pos())
+                game_handler.menu_handle_mouse_action(pygame.mouse.get_pos())
 
         if event.type == pygame.KEYDOWN:
             keyboard_state.parse_key_input(event.key, event.unicode, True)

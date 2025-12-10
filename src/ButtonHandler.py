@@ -4,6 +4,7 @@ import Events
 import button
 import Doodads
 import GameHandler
+import Menu
 
 DEFAULT_UI_PATH = "../assets/ui/editor/"
 
@@ -32,8 +33,6 @@ def select_pen(editor, button):
     select_this(button)
     editor.set_fill(False)
 
-# Misc buttons
-
 def change_brush(editor, button):
     min_brush = 1
     max_brush = 10
@@ -47,6 +46,16 @@ def change_brush(editor, button):
 
 def center_world(editor, button):
     pygame.event.post(pygame.event.Event(Events.CENTER_CAMERA))
+
+# Menu buttons
+def switch_to_editor(game_handler, button):
+    game_handler.switch_tab(GameHandler.CurrentTab.EDITOR)
+
+def switch_to_lobby(game_handler, button):
+    game_handler.switch_tab(GameHandler.CurrentTab.LOBBY)
+
+def quit_game(game_handler, button):
+    game_handler.stop_game()
 
 # World buttons
 def select_owner_no(editor, button):
@@ -195,6 +204,20 @@ def load_misc_buttons():
 
     return buttons
 
+def load_menu_buttons():
+    buttons : list[button.SimpleButton] = []
+
+    lobby = button.SimpleButton((0, 0), (512, 128), "Lobby", switch_to_lobby)
+    buttons.append(lobby)
+
+    editor = button.SimpleButton((0, 0), (512, 128), "Editor", switch_to_editor)
+    buttons.append(editor)
+
+    quit_button = button.SimpleButton((0, 0), (512, 128), "Quit Game", quit_game)
+    buttons.append(quit_button)
+
+    return buttons
+
 def load_world_buttons():
     buttons : list[button.TextureButton] = []
 
@@ -286,13 +309,6 @@ def load_world_buttons():
     grave1.load_texture(DEFAULT_UI_PATH + "world/Grave_1.png")
     grave1.set_doodad_state()
     buttons.append(grave1)
-
-    return buttons
-
-def load_menu_buttons():
-    buttons : list[button.Button] = []
-
-    # lobby = button.SimpleButton((), ())
 
     return buttons
 

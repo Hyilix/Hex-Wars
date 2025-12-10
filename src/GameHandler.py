@@ -8,6 +8,7 @@ import Menu
 import colors
 
 import KeyboardState
+import ButtonHandler
 
 from enum import Enum
 
@@ -34,13 +35,15 @@ class GameHandler:
 
             self.__renderer : GameRenderer.GameRenderer = None
             self.__editor : Editor.Editor = None
-            self.__menu = None
+            self.__menu : Menu.Menu = None
 
             self.__camera : GameRenderer.Camera = None
             self.__hex_map : HexMap.HexMap = None
 
             self.__screen : pygame.Surface = None
             self.__color_scheme : list[tuple[int, int, int]] = None
+
+            self.__game_running = False
 
             GameHandler.__initialized = True
 
@@ -50,8 +53,20 @@ class GameHandler:
     def __is_camera_set_up(self):
         return self.__camera
 
+    def __is_menu_set_up(self):
+        return self.__menu
+
     def set_color_scheme(self, scheme : list[tuple[int, int, int]]):
         self.__color_scheme = scheme
+
+    def start_game(self):
+        self.__game_running = True
+
+    def stop_game(self):
+        self.__game_running = False
+
+    def get_game_running(self):
+        return self.__game_running
 
     # It is expected that the set_screen method will be called after initializing the handler
     def set_screen(self, screen):
@@ -72,6 +87,11 @@ class GameHandler:
 
     def create_default_camera(self):
         self.__camera = GameRenderer.Camera(self.__screen.get_size(), (0, 0), 1)
+
+    def create_default_main_menu(self):
+        self.__menu = Menu.MainMenu(self.__screen)
+        self.__menu.add_buttons(ButtonHandler.load_menu_buttons())
+        self.__menu.spread_buttons()
 
     def clear_everything(self):
         self.__hex_map = None
@@ -123,11 +143,20 @@ class GameHandler:
         if self.__is_editor_set_up():
             self.__editor.handle_keyboard_action(self.__screen)
 
+    def menu_handle_mouse_action(self, mouse_pos, click_once = False):
+        if not self.__is_menu_set_up():
+            return
+
+        self.__menu.buttons_click_action(mouse_pos, GameHandler())
+
     def draw_renderer_chunks(self):
         self.__renderer.draw_chunks()
 
     def draw_editor_tabs(self):
         self.__editor.render_tabs(self.__screen)
+
+    def draw_menu_buttons(self):
+        self.__menu.draw_buttons()
 
     def draw_every_frame(self):
         if self.__renderer:
@@ -135,6 +164,9 @@ class GameHandler:
 
         if self.__editor and self.__renderer:
             self.draw_editor_tabs()
+
+        if self.__menu:
+            self.draw_menu_buttons()
 
     def set_new_map_editor(self):
         self.__hex_map = self.__editor.get_hex_map()
@@ -147,6 +179,7 @@ class GameHandler:
     def handle_tabs(self):
         if self.__current_tab == CurrentTab.MAINMENU:
             print("Current Tab -> MAINMENU")
+            self.create_default_main_menu()
 
         elif self.__current_tab == CurrentTab.EDITOR:
             print("Current Tab -> EDITOR")

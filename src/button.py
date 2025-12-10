@@ -54,8 +54,8 @@ class SimpleButton(Button):
         self.color = colors.gray_light
         self.width = 2
 
-        self.DEFAULT_FONT = 'freesansbold.ttf'
-        self.button_font = pygame.font.Font(self.DEFAULT_FONT, 16)
+        self.default_font = DEFAULT_FONT_PATH + 'Orbitron.ttf'
+        self.button_font = pygame.font.Font(self.default_font, 30)
 
     def change_pos(self, new_pos: tuple[int, int]):
         super().change_pos(new_pos)
@@ -65,7 +65,7 @@ class SimpleButton(Button):
         text = self.button_font.render(self.content, True, colors.gray_light)
         text_rect = text.get_rect()
 
-        text_rect.update(self.get_pos(), self.get_size())
+        text_rect.center = self.border.center
 
         screen.blit(text, text_rect)
 
