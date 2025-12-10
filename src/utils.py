@@ -90,10 +90,11 @@ def __search_checked_states(self, checked_state, action_list, modified_tiles):
                                     'doodad', checked_state_tile))
 
         self.get_players()[checked_state.get_owner() - 1].remove_state_by_central(checked_state_tile)
-        if action_list:
-            action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
-                                    checked_state_tile.get_central_hex_status(), False,
-                                    'is_central_hex', checked_state_tile))
+        checked_state_tile.set_central_hex_status(False)
+        # if action_list:
+        #     action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
+        #                             checked_state_tile.get_central_hex_status(), False,
+        #                             'is_central_hex', checked_state_tile))
         modified_tiles.append(checked_state_tile)
 
     for child_state in child_states:
@@ -164,6 +165,11 @@ def state_handling(self, tile_list : list[Hex.Hex], action_list):
     for tile in tile_list_copy:
         # print("Handle new tile")
         owner = tile.owner
+
+        is_tile_central = tile.get_central_hex_status()
+        if is_tile_central:
+            print(f"Tile central!! {tile.get_position()}")
+
         if owner > 0:
             new_state = State.State(owner, tile)
 
@@ -202,6 +208,10 @@ def state_handling(self, tile_list : list[Hex.Hex], action_list):
                             modified_tiles.append(old_tile)
 
                             self.get_players()[owner - 1].remove_state_by_central(old_tile)
+
+                        if is_tile_central:
+                            print(f"Tile central found: {is_tile_central}")
+                            other_state.set_central_hex(tile)
 
                         new_state = None
                         return modified_tiles
