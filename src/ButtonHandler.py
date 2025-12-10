@@ -7,6 +7,7 @@ import GameHandler
 import Menu
 
 DEFAULT_UI_PATH = "../assets/ui/editor/"
+DEFAULT_UI_LOBBY_PATH = "../assets/ui/lobby/"
 
 # Button functions
 # Main buttons
@@ -47,7 +48,7 @@ def change_brush(editor, button):
 def center_world(editor, button):
     pygame.event.post(pygame.event.Event(Events.CENTER_CAMERA))
 
-# Menu buttons
+# Main Menu buttons
 def switch_to_editor(game_handler, button):
     game_handler.switch_tab(GameHandler.CurrentTab.EDITOR)
 
@@ -56,6 +57,19 @@ def switch_to_lobby(game_handler, button):
 
 def quit_game(game_handler, button):
     game_handler.stop_game()
+
+# Lobby buttons
+def player_color_hex(game_handler, button):
+    pass
+
+def player_join(game_handler, button):
+    pass
+
+def lobby_start(game_handler, button):
+    game_handler.switch_tab(GameHandler.CurrentTab.MAPPICKER)
+
+def lobby_back_to_menu(game_handler, button):
+    game_handler.switch_tab(GameHandler.CurrentTab.MAINMENU)
 
 # World buttons
 def select_owner_no(editor, button):
@@ -199,7 +213,7 @@ def load_misc_buttons():
     center.load_texture(DEFAULT_UI_PATH + "center/Center.png")
     buttons.append(center)
 
-    brush = button.SliderButton((0, 0), (196, 64), "Brush: 1",change_brush)
+    brush = button.SliderButton((0, 0), (196, 64), "Brush: 1", change_brush)
     buttons.append(brush)
 
     return buttons
@@ -215,6 +229,59 @@ def load_menu_buttons():
 
     quit_button = button.SimpleButton((0, 0), (512, 128), "Quit Game", quit_game)
     buttons.append(quit_button)
+
+    return buttons
+
+def load_lobby_hexes():
+    buttons : list[button.Button] = []
+
+    hex1 = button.TextureButton((0, 0), (128, 128), player_color_hex)
+    hex1.load_texture(DEFAULT_UI_LOBBY_PATH + "HexTile.png")
+    buttons.append(hex1)
+
+    hex2 = button.TextureButton((0, 0), (128, 128), player_color_hex)
+    hex2.load_texture(DEFAULT_UI_LOBBY_PATH + "HexTile.png")
+    buttons.append(hex2)
+
+    hex3 = button.TextureButton((0, 0), (128, 128), player_color_hex)
+    hex3.load_texture(DEFAULT_UI_LOBBY_PATH + "HexTile.png")
+    buttons.append(hex3)
+
+    hex4 = button.TextureButton((0, 0), (128, 128), player_color_hex)
+    hex4.load_texture(DEFAULT_UI_LOBBY_PATH + "HexTile.png")
+    buttons.append(hex4)
+
+    hex5 = button.TextureButton((0, 0), (128, 128), player_color_hex)
+    hex5.load_texture(DEFAULT_UI_LOBBY_PATH + "HexTile.png")
+    buttons.append(hex5)
+
+    hex6 = button.TextureButton((0, 0), (128, 128), player_color_hex)
+    hex6.load_texture(DEFAULT_UI_LOBBY_PATH + "HexTile.png")
+    buttons.append(hex6)
+
+    return buttons
+
+def load_lobby_buttons():
+    screen_size = GameHandler.GameHandler().get_screen().get_size()
+
+    buttons : list[button.Button] = []
+
+    main_menu = button.SimpleButton((screen_size[0] // 30, screen_size[1] // 30), (128, 64), "Main Menu", lobby_back_to_menu)
+    main_menu.change_font(20)
+    buttons.append(main_menu)
+
+    start = button.SimpleButton((screen_size[0] // 2 - 64, screen_size[1] // 10 * 8), (128, 64), "Start", lobby_start)
+    start.change_font(20)
+    buttons.append(start)
+
+    return buttons
+
+def load_lobby_join_buttons():
+    buttons : list[button.SimpleButton] = []
+
+    join = button.SimpleButton((0, 0), (96, 64), "Join", player_join)
+    join.change_font(15)
+    buttons.append(join)
 
     return buttons
 

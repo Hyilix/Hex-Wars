@@ -57,6 +57,9 @@ class SimpleButton(Button):
         self.default_font = DEFAULT_FONT_PATH + 'Orbitron.ttf'
         self.button_font = pygame.font.Font(self.default_font, 30)
 
+    def change_font(self, font_size : int):
+        self.button_font = pygame.font.Font(self.default_font, font_size)
+
     def change_pos(self, new_pos: tuple[int, int]):
         super().change_pos(new_pos)
         self.border.topleft = new_pos
@@ -99,7 +102,10 @@ class TextureButton(Button):
         self.__highlight.y = new_pos[1]
 
     def load_texture(self, path : str):
+        old_size = self.__texture.get_size()
         self.__texture = pygame.image.load(path)
+
+        self.__texture = pygame.transform.scale(self.__texture, old_size)
 
     def draw(self, screen):
         screen.blit(self.__texture, self.get_pos())

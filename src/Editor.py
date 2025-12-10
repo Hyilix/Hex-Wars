@@ -225,6 +225,8 @@ class Editor:
         self.load_info = InfoTabs.InfoLoad((screen_size[0] // 12, screen_size[1] // 12))
         self.map_info = InfoTabs.InfoMap((screen_size[0] // 12, screen_size[1] // 12))
 
+        pygame.event.post(pygame.event.Event(Events.CENTER_CAMERA))
+
     def is_blocked(self):
         return self.__is_blocked
 

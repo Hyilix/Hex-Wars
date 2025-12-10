@@ -68,6 +68,9 @@ class GameHandler:
     def get_game_running(self):
         return self.__game_running
 
+    def get_screen(self):
+        return self.__screen
+
     # It is expected that the set_screen method will be called after initializing the handler
     def set_screen(self, screen):
         self.__screen = screen
@@ -92,6 +95,12 @@ class GameHandler:
         self.__menu = Menu.MainMenu(self.__screen)
         self.__menu.add_buttons(ButtonHandler.load_menu_buttons())
         self.__menu.spread_buttons()
+
+    def create_default_lobby_menu(self):
+        self.__menu = Menu.Lobby(self.__screen)
+        self.__menu.add_buttons(ButtonHandler.load_lobby_hexes())
+        self.__menu.spread_buttons()
+        self.__menu.add_buttons(ButtonHandler.load_lobby_buttons())
 
     def clear_everything(self):
         self.__hex_map = None
@@ -158,6 +167,9 @@ class GameHandler:
     def draw_menu_buttons(self):
         self.__menu.draw_buttons()
 
+    def draw_menu_title(self):
+        self.__menu.draw_title()
+
     def draw_every_frame(self):
         if self.__renderer:
             self.draw_renderer_chunks()
@@ -166,6 +178,7 @@ class GameHandler:
             self.draw_editor_tabs()
 
         if self.__menu:
+            self.draw_menu_title()
             self.draw_menu_buttons()
 
     def set_new_map_editor(self):
@@ -191,11 +204,12 @@ class GameHandler:
             self.create_default_editor()
 
         elif self.__current_tab == CurrentTab.GAMEPLAY:
-            pass
+            print("Current Tab -> GAMEPLAY")
 
         elif self.__current_tab == CurrentTab.LOBBY:
-            pass
+            print("Current Tab -> LOBBY")
+            self.create_default_lobby_menu()
 
         elif self.__current_tab == CurrentTab.MAPPICKER:
-            pass
+            print("Current Tab -> MAPPICKER")
 
