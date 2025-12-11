@@ -342,7 +342,7 @@ class GameRenderer:
     def draw_entire_map_separate(self, hex_map : HexMap.HexMap):
         tile_size = (64, 64)
 
-        map_size = (hex_map.dimensions[0] // 2 * (tile_size[0] * 3 // 2) + tile_size[0] // 4,
+        map_size = (hex_map.dimensions[0] // 2 * (tile_size[0] * 3 // 2) + tile_size[0],
                     hex_map.dimensions[1] * tile_size[1] + tile_size[1] // 2)
 
         map_surf = pygame.Surface(map_size, pygame.SRCALPHA)
