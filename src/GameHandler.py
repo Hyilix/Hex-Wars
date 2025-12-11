@@ -116,6 +116,12 @@ class GameHandler:
     def lobby_remove_player(self, button):
         self.__menu.remove_player(button)
 
+    def lobby_change_color(self, button):
+        self.__menu.change_next_color(button)
+
+    def lobby_get_color_scheme(self):
+        self.__color_scheme = self.__menu.get_color_scheme()
+
     def clear_everything(self):
         self.__hex_map = None
         self.__color_scheme = None

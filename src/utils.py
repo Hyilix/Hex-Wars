@@ -1,3 +1,4 @@
+import pygame
 import copy
 
 import Doodads
@@ -6,6 +7,8 @@ import Player
 import State
 import ActionHandler
 
+import colors
+
 # Clamp function
 def clamp(n, min, max):
     if n < min:
@@ -13,6 +16,17 @@ def clamp(n, min, max):
     elif n > max:
         return max
     return n
+
+# Change color of the hex
+def change_color(surface, old_color : tuple[int, int, int], new_color : tuple[int, int, int]):
+    pygame.transform.threshold(
+        dest_surface = surface,
+        surface = surface,
+        search_color = old_color,
+        threshold = (0, 0, 0, 0),
+        set_color = new_color,
+        inverse_set = True
+    )
 
 # Helper function to check for any state including the tile
 def __check_state_interuption(self, tile : Hex.Hex, action_list, modified_tiles, states_checked):

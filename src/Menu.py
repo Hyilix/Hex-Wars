@@ -86,11 +86,12 @@ class Lobby(Menu):
         self.get_buttons().extend(buttons)
 
     def __get_next_available_color(self):
-        for color in self.available_colors:
+        for i in range(len(self.available_colors)):
+            color = self.available_colors[i]
             if color not in self.color_scheme:
-                return color
+                return color, i
 
-        return None
+        return None, None
 
     def spread_buttons(self, y_offset : int = 0, start_index : int = 0):
         x_offset = 20
@@ -155,7 +156,10 @@ class Lobby(Menu):
                 break
 
         # Set next available color
-        self.color_scheme[button_index] = self.__get_next_available_color()
+        self.color_scheme[button_index], color_index = self.__get_next_available_color()
+
+        self.get_buttons()[button_index - 1].change_color(self.color_scheme[button_index])
+        self.get_buttons()[button_index - 1].set_color_index(color_index)
 
     def remove_player(self, button):
         # Find button
@@ -190,8 +194,54 @@ class Lobby(Menu):
 
         self.move_join_next()
 
-    def open_colors_panel(self):
-        pass
+        for i in range(1, len(self.color_scheme)):
+            color = self.color_scheme[i]
+            if color != None:
+                self.get_buttons()[i - 1].change_color(color)
+                self.get_buttons()[i - 1].set_color_index(self.available_colors.index(color))
+            else:
+                self.get_buttons()[i - 1].change_color(colors.shader_color)
+                self.get_buttons()[i - 1].set_color_index(-1)
+
+    def change_next_color(self, button):
+        if button.get_old_color() == colors.shader_color:
+            return
+
+        # Find button
+        button_index = -1
+
+        # Find the index of the button
+        for i in range(len(self.get_buttons())):
+            loaded_button = self.get_buttons()[i]
+            if button == loaded_button:
+                button_index = i
+                break
+
+        # Found no button
+        if button_index == -1:
+            return
+
+        no_colors = len(self.available_colors)
+
+        button.inc_color_index()
+        if button.get_color_index() >= no_colors:
+            button.set_color_index(0)
+
+        secluded_color_scheme = []
+        for i in range(1, len(self.color_scheme)):
+            if i - 1 != button_index:
+                secluded_color_scheme.append(self.color_scheme[i])
+
+        while (self.available_colors[button.get_color_index()] in secluded_color_scheme):
+            button.inc_color_index()
+            if button.get_color_index() >= no_colors:
+                button.set_color_index(0)
+
+        button.change_color(self.available_colors[button.get_color_index()])
+        self.color_scheme[button_index + 1] = self.available_colors[button.get_color_index()]
+
+    def get_color_scheme(self):
+        return self.color_scheme
 
 class MapPicker(Menu):
     def __init__(self, screen):

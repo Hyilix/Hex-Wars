@@ -5,6 +5,7 @@ import pygame
 import colors
 import Collisions_2d
 from utils import clamp
+import utils
 
 DEFAULT_FONT_PATH = "../assets/fonts/"
 
@@ -100,6 +101,26 @@ class TextureButton(Button):
         self.__highlight = pygame.Rect(pos, size)
 
         self.__highlight_width = 3
+
+        # Lobby variables
+        self.__old_color = colors.shader_color
+        self.__color_index = -1
+
+    def change_color(self, new_color):
+        utils.change_color(self.__texture, self.__old_color, new_color)
+        self.__old_color = new_color
+
+    def get_old_color(self):
+        return self.__old_color
+
+    def get_color_index(self):
+        return self.__color_index
+
+    def set_color_index(self, index):
+        self.__color_index = index
+
+    def inc_color_index(self, index = 1):
+        self.__color_index += index
 
     def set_doodad_state(self):
         self.__is_doodad = True

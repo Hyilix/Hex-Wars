@@ -60,16 +60,14 @@ def quit_game(game_handler, button):
 
 # Lobby buttons
 def player_color_hex(game_handler, button):
-    pass
+    game_handler.lobby_get_color_scheme()
+    game_handler.lobby_change_color(button)
 
 def player_join(game_handler, button):
     game_handler.lobby_join_player()
 
 def player_leave(game_handler, button):
     game_handler.lobby_remove_player(button)
-
-def player_name(game_handler, button):
-    pass
 
 def lobby_start(game_handler, button):
     game_handler.switch_tab(GameHandler.CurrentTab.MAPPICKER)
