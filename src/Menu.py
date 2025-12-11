@@ -4,6 +4,8 @@ import button
 import colors
 import ButtonHandler
 
+from MapHandling import get_map_previews_by_player_count
+
 DEFAULT_FONT_PATH = "../assets/fonts/"
 
 # Super class for all the menus in the game
@@ -29,6 +31,9 @@ class Menu:
     def clear_buttons(self):
         self.__buttons = []
 
+    def change_title(self, new_title : str):
+        self.__title = new_title
+
     def spread_buttons(self, y_offset = 0, start_index = 0):
         y_offset = 20
         no_buttons = len(self.__buttons)
@@ -52,6 +57,9 @@ class Menu:
             button.draw(self.__screen)
 
     def draw_title(self):
+        if self.__title == "":
+            return
+
         text = self.button_font.render(self.__title, True, colors.gray_light)
         text_rect = text.get_rect()
 
@@ -66,6 +74,9 @@ class Menu:
         for button in self.__buttons:
             if button.check_mouse_collision(mouse_pos):
                 button.call_function(caller, button)
+
+    def spread_maps(self, buttons_per_row : int = 0):
+        pass
 
 # Main menu, where the game opens
 class MainMenu(Menu):
@@ -241,9 +252,66 @@ class Lobby(Menu):
         self.color_scheme[button_index + 1] = self.available_colors[button.get_color_index()]
 
     def get_color_scheme(self):
+        print(f"Returned color scheme : {self.color_scheme}")
         return self.color_scheme
+
+    def found_maps(self):
+        player_colors = self.color_scheme[1:]
+        player_count = sum(1 for p in player_colors if p is not None)
+
+        return len(get_map_previews_by_player_count(player_count)) > 0
 
 class MapPicker(Menu):
     def __init__(self, screen):
         super().__init__(screen)
+        self.change_title("")
+
+        self.maps = []
+
+    def load_maps(self, color_scheme):
+        player_colors = color_scheme[1:]
+        player_count = sum(1 for p in player_colors if p is not None)
+
+        self.maps = get_map_previews_by_player_count(player_count)
+
+    # Spread the buttons evenly on the tab, having equal distance between them on the x-axis
+    def spread_maps(self, buttons_per_row : int = 0):
+        screen_size = self.get_screen().get_size()
+
+        y_offset = 10
+        x_offset = 10
+
+        if buttons_per_row == 0:
+            # Calculate how many buttons can fit with proper spacing
+            button_width = self.maps[0][1].get_size()[0]
+            available_width = screen_size[0] - (2 * x_offset)
+
+            # Estimate spacing (use a minimum spacing value)
+            min_spacing = 10
+            buttons_per_row = max(1, available_width // (button_width + min_spacing))
+
+        # Calculate spacing between buttons
+        available_width = screen_size[0] - (2 * x_offset)
+        button_width = self.maps[0][1].get_size()[0]
+
+        # Calculate spacing to distribute buttons evenly
+        total_button_width = button_width * buttons_per_row
+        remaining_space = available_width - total_button_width
+        spacing = remaining_space // (buttons_per_row + 1)
+
+        # Set button positions
+        row = 0
+        col = 0
+        for map_tuple in self.maps:
+            map_surf = map_tuple[1]
+            x_pos = x_offset + spacing + col * (button_width + spacing)
+            y_pos = y_offset + row * (map_surf.get_size()[1] + y_offset)
+
+            self.get_screen().blit(map_surf, (x_pos, y_pos))
+
+            # Move to next column, or wrap to next row
+            col += 1
+            if col == buttons_per_row:
+                col = 0
+                row += 1
 

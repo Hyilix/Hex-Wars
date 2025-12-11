@@ -109,6 +109,12 @@ class GameHandler:
         self.__menu.add_buttons(ButtonHandler.load_lobby_join_buttons())
         self.__menu.move_join_next()
 
+    def create_default_picker_menu(self):
+        self.__menu = Menu.MapPicker(self.__screen)
+
+    def picker_load_maps(self):
+        self.__menu.load_maps(self.__color_scheme)
+
     def lobby_join_player(self):
         self.__menu.join_player()
         self.__menu.move_join_next()
@@ -122,9 +128,12 @@ class GameHandler:
     def lobby_get_color_scheme(self):
         self.__color_scheme = self.__menu.get_color_scheme()
 
+    def lobby_found_map(self):
+        return self.__menu.found_maps()
+
     def clear_everything(self):
         self.__hex_map = None
-        self.__color_scheme = None
+        # self.__color_scheme = None
         self.__editor = None
         self.__renderer = None
         self.__menu = None
@@ -190,6 +199,9 @@ class GameHandler:
     def draw_menu_title(self):
         self.__menu.draw_title()
 
+    def draw_map_previews(self):
+        self.__menu.spread_maps()
+
     def draw_every_frame(self):
         if self.__renderer:
             self.draw_renderer_chunks()
@@ -200,6 +212,7 @@ class GameHandler:
         if self.__menu:
             self.draw_menu_title()
             self.draw_menu_buttons()
+            self.draw_map_previews()
 
     def set_new_map_editor(self):
         self.__hex_map = self.__editor.get_hex_map()
@@ -227,9 +240,12 @@ class GameHandler:
             print("Current Tab -> GAMEPLAY")
 
         elif self.__current_tab == CurrentTab.LOBBY:
+            self.__color_scheme = None
             print("Current Tab -> LOBBY")
             self.create_default_lobby_menu()
 
         elif self.__current_tab == CurrentTab.MAPPICKER:
             print("Current Tab -> MAPPICKER")
+            self.create_default_picker_menu()
+            self.picker_load_maps()
 

@@ -216,3 +216,46 @@ def load_map(map_name : str):
     else:
         return None
 
+def get_map_previews_by_player_count(num_players):
+    previews = []
+
+    # Check if maps directory exists
+    if not os.path.exists(DEFAULT_MAP_PATH):
+        return previews
+
+    # Iterate through each item in maps directory
+    for map_name in os.listdir(DEFAULT_MAP_PATH):
+        map_path = os.path.join(DEFAULT_MAP_PATH, map_name)
+
+        # Skip if not a directory
+        if not os.path.isdir(map_path):
+            continue
+
+        info_path = os.path.join(map_path, 'info.hmap')
+        preview_path = os.path.join(map_path, 'preview.png')
+
+        # Check if both required files exist
+        if not os.path.exists(info_path) or not os.path.exists(preview_path):
+            continue
+
+        try:
+            # Load the pickled map data
+            with open(info_path, 'rb') as f:
+                map_data = pickle.load(f)
+
+            # Count non-None players
+            if 'Players' in map_data:
+                player_count = sum(1 for p in map_data['Players'] if p is not None)
+
+                # If player count matches, load the preview
+                if player_count == num_players:
+                    preview_surface = pygame.image.load(preview_path)
+                    previews.append((map_name, preview_surface))
+
+        except (pickle.PickleError, IOError, pygame.error) as e:
+            # Skip maps that can't be loaded
+            print(f"Warning: Could not load map '{map_name}': {e}")
+            continue
+
+    return previews
+

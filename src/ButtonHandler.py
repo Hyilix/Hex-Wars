@@ -60,7 +60,6 @@ def quit_game(game_handler, button):
 
 # Lobby buttons
 def player_color_hex(game_handler, button):
-    game_handler.lobby_get_color_scheme()
     game_handler.lobby_change_color(button)
 
 def player_join(game_handler, button):
@@ -70,7 +69,12 @@ def player_leave(game_handler, button):
     game_handler.lobby_remove_player(button)
 
 def lobby_start(game_handler, button):
-    game_handler.switch_tab(GameHandler.CurrentTab.MAPPICKER)
+    game_handler.lobby_get_color_scheme()
+
+    if game_handler.lobby_found_map():
+        game_handler.switch_tab(GameHandler.CurrentTab.MAPPICKER)
+    else:
+        print("No maps for the current configuration found")
 
 def lobby_back_to_menu(game_handler, button):
     game_handler.switch_tab(GameHandler.CurrentTab.MAINMENU)
