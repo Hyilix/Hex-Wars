@@ -17,6 +17,8 @@ class Button:
 
         self.is_highlighted = None
 
+        self.active = True
+
     def change_pos(self, new_pos : tuple[int, int]):
         self.__pos = new_pos
 
@@ -38,6 +40,9 @@ class Button:
 
     # Determine if mouse is on button
     def check_mouse_collision(self, mouse_pos : tuple[int, int]):
+        if not self.active:
+            return
+
         return Collisions_2d.point_rect(mouse_pos, self.__pos, self.__size)
 
     def draw(self, screen):
@@ -65,6 +70,9 @@ class SimpleButton(Button):
         self.border.topleft = new_pos
 
     def render_text(self, screen):
+        if not self.active:
+            return
+
         text = self.button_font.render(self.content, True, colors.gray_light)
         text_rect = text.get_rect()
 
@@ -73,6 +81,9 @@ class SimpleButton(Button):
         screen.blit(text, text_rect)
 
     def draw(self, screen):
+        if not self.active:
+            return
+
         pygame.draw.rect(screen, self.color, self.border, width=self.width)
         self.render_text(screen)
 

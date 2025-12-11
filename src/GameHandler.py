@@ -98,9 +98,23 @@ class GameHandler:
 
     def create_default_lobby_menu(self):
         self.__menu = Menu.Lobby(self.__screen)
+
         self.__menu.add_buttons(ButtonHandler.load_lobby_hexes())
         self.__menu.spread_buttons()
+
+        self.__menu.add_buttons(ButtonHandler.load_lobby_leave_buttons())
+        self.__menu.spread_buttons(100, 6)
+
         self.__menu.add_buttons(ButtonHandler.load_lobby_buttons())
+        self.__menu.add_buttons(ButtonHandler.load_lobby_join_buttons())
+        self.__menu.move_join_next()
+
+    def lobby_join_player(self):
+        self.__menu.join_player()
+        self.__menu.move_join_next()
+
+    def lobby_remove_player(self, button):
+        self.__menu.remove_player(button)
 
     def clear_everything(self):
         self.__hex_map = None
@@ -153,7 +167,7 @@ class GameHandler:
             self.__editor.handle_keyboard_action(self.__screen)
 
     def menu_handle_mouse_action(self, mouse_pos, click_once = False):
-        if not self.__is_menu_set_up():
+        if not self.__is_menu_set_up() or click_once == False:
             return
 
         self.__menu.buttons_click_action(mouse_pos, GameHandler())

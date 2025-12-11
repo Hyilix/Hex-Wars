@@ -63,6 +63,12 @@ def player_color_hex(game_handler, button):
     pass
 
 def player_join(game_handler, button):
+    game_handler.lobby_join_player()
+
+def player_leave(game_handler, button):
+    game_handler.lobby_remove_player(button)
+
+def player_name(game_handler, button):
     pass
 
 def lobby_start(game_handler, button):
@@ -279,9 +285,44 @@ def load_lobby_buttons():
 def load_lobby_join_buttons():
     buttons : list[button.SimpleButton] = []
 
-    join = button.SimpleButton((0, 0), (96, 64), "Join", player_join)
-    join.change_font(15)
+    join = button.SimpleButton((0, 0), (128, 48), "Join", player_join)
+    join.change_font(18)
     buttons.append(join)
+
+    return buttons
+
+def load_lobby_leave_buttons():
+    buttons : list[button.SimpleButton] = []
+
+    leave1 = button.SimpleButton((0, 0), (128, 48), "Leave", player_leave)
+    leave1.change_font(18)
+    leave1.active = False
+    buttons.append(leave1)
+
+    leave2 = button.SimpleButton((0, 0), (128, 48), "Leave", player_leave)
+    leave2.change_font(18)
+    leave2.active = False
+    buttons.append(leave2)
+
+    leave3 = button.SimpleButton((0, 0), (128, 48), "Leave", player_leave)
+    leave3.change_font(18)
+    leave3.active = False
+    buttons.append(leave3)
+
+    leave4 = button.SimpleButton((0, 0), (128, 48), "Leave", player_leave)
+    leave4.change_font(18)
+    leave4.active = False
+    buttons.append(leave4)
+
+    leave5 = button.SimpleButton((0, 0), (128, 48), "Leave", player_leave)
+    leave5.change_font(18)
+    leave5.active = False
+    buttons.append(leave5)
+
+    leave6 = button.SimpleButton((0, 0), (128, 48), "Leave", player_leave)
+    leave6.change_font(18)
+    leave6.active = False
+    buttons.append(leave6)
 
     return buttons
 
