@@ -66,6 +66,7 @@ while game_handler.get_game_running():
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
                 keyboard_state.parse_mouse_state(1, True)
+                game_handler.gameplay_handle_mouse_action(pygame.mouse.get_pos(), True)
                 game_handler.editor_handle_mouse_action(pygame.mouse.get_pos(), True)
                 game_handler.menu_handle_mouse_action(pygame.mouse.get_pos(), True)
 
@@ -81,6 +82,7 @@ while game_handler.get_game_running():
 
         if event.type == pygame.MOUSEMOTION:
             if keyboard_state.is_mouse1_down:
+                game_handler.gameplay_handle_mouse_action(pygame.mouse.get_pos())
                 game_handler.editor_handle_mouse_action(pygame.mouse.get_pos())
                 game_handler.menu_handle_mouse_action(pygame.mouse.get_pos())
 
@@ -94,11 +96,14 @@ while game_handler.get_game_running():
             if not keyboard_handled_this_frame:
                 # Editor handle the keyboard
                 game_handler.editor_handle_keyboard()
+                game_handler.gameplay_handle_keyboard()
 
                 keyboard_handled_this_frame = True
 
         if event.type == Events.MAP_CHANGED:
             game_handler.set_new_map_editor()
+            game_handler.set_new_map_gameplay()
+            game_handler.reload_renderer()
 
         if event.type == Events.CENTER_CAMERA:
             game_handler.center_camera()

@@ -60,6 +60,12 @@ class GameHandler:
     def __is_menu_set_up(self):
         return self.__menu
 
+    def __is_gameplay_set_up(self):
+        return self.__screen and self.__gameplay and self.__hex_map and self.__camera
+
+    def __is_renderer_set_up(self):
+        return self.__renderer
+
     def set_map_to_load(self, map_to_load):
         self.__map_to_load = map_to_load
 
@@ -193,11 +199,28 @@ class GameHandler:
         if self.__is_editor_set_up():
             self.__editor.handle_keyboard_action(self.__screen)
 
+    def gameplay_handle_keyboard(self):
+        if self.__is_gameplay_set_up():
+            self.__gameplay.handle_keyboard_action(self.__screen)
+
     def menu_handle_mouse_action(self, mouse_pos, click_once = False):
         if not self.__is_menu_set_up() or click_once == False:
             return
 
         self.__menu.buttons_click_action(mouse_pos, GameHandler())
+
+    def gameplay_handle_mouse_action(self, mouse_pos, click_once = False):
+        if not self.__is_gameplay_set_up():
+            return
+
+        tile_pos = self.__camera.get_tile_at_position(mouse_pos)
+        # Check if tile is within bounds
+        if (tile_pos[0] >= 0 and tile_pos[0] < self.__hex_map.dimensions[0] and
+            tile_pos[1] >= 0 and tile_pos[1] < self.__hex_map.dimensions[1]):
+            current_tile = self.__hex_map.get_tile_at_position(tile_pos)
+            self.__gameplay.handle_mouse_action(mouse_pos, current_tile, click_once)
+        elif click_once == True:
+            self.__gameplay.handle_mouse_action(mouse_pos, None, click_once)
 
     def draw_renderer_chunks(self):
         self.__renderer.draw_chunks()
@@ -225,6 +248,14 @@ class GameHandler:
     def set_new_map_editor(self):
         if self.__is_editor_set_up():
             self.__hex_map = self.__editor.get_hex_map()
+
+    def set_new_map_gameplay(self):
+        if self.__is_gameplay_set_up():
+            self.__hex_map = self.__gameplay.get_hex_map()
+
+    def reload_renderer(self):
+        if self.__is_renderer_set_up():
+            self.__renderer.reload_renderer(self.__hex_map)
 
     def center_camera(self):
         if self.__is_camera_set_up():

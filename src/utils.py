@@ -47,7 +47,7 @@ def __check_state_interuption(self, tile : Hex.Hex, action_list, modified_tiles,
                 print("Preemptly removed invalid state")
                 child_tile = state.get_central_hex()
 
-                if action_list:
+                if action_list and child_tile.doodad and child_tile.doodad.get_name() == "Base":
                     action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
                                             copy.deepcopy(child_tile.doodad), None,
                                             'doodad', child_tile))
@@ -73,10 +73,11 @@ def __check_state_interuption(self, tile : Hex.Hex, action_list, modified_tiles,
             if tile.get_central_hex_status():
                 new_central = state.find_new_central_hex()
 
-                if action_list:
+                if action_list and tile.doodad and tile.doodad.get_name() == "Base":
                     action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
                                             copy.deepcopy(tile.doodad), None,
                                             'doodad', tile))
+                if action_list:
                     action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
                                             copy.deepcopy(new_central.doodad), copy.deepcopy(Doodads.TownCenter(new_central.owner)),
                                             'doodad', new_central))
@@ -98,7 +99,7 @@ def __search_checked_states(self, checked_state, action_list, modified_tiles):
     if not checked_state.is_state_valid():
         print("Handle an invalid state")
 
-        if action_list:
+        if action_list and checked_state_tile.doodad and checked_state_tile.doodad.get_name() == "Base":
             action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
                                     copy.deepcopy(checked_state_tile.doodad), None,
                                     'doodad', checked_state_tile))
@@ -117,7 +118,7 @@ def __search_checked_states(self, checked_state, action_list, modified_tiles):
         if not child_state.is_state_valid():
             print("Handle an invalid state")
 
-            if action_list:
+            if action_list and child_tile.doodad and child_tile.doodad.get_name() == "Base":
                 action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE,
                                         copy.deepcopy(child_tile.doodad), None,
                                         'doodad', child_tile))

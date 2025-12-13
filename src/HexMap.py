@@ -1,6 +1,9 @@
+import copy
 from Hex import Hex
 import random
 from collections import deque
+
+import ActionHandler
 
 class HexMap:
     def __init__(self, x_tile_count : int, y_tile_count : int, default_owner : int = -1):
@@ -87,7 +90,7 @@ class HexMap:
     def __bfs_up_to_level(self, start, max_level, only_identical = False):
         visited = [start]
         queue = deque([(start, 0)])
-        
+
         while queue:
             tile, level = queue.popleft()
             if level < max_level or max_level == -1:
@@ -99,13 +102,52 @@ class HexMap:
 
         return visited
 
+    def get_movable_tiles(self, start, max_level):
+        visited = [start]
+        queue = deque([(start, 0)])
+
+        while queue:
+            tile, level = queue.popleft()
+            if (level < max_level or max_level == -1) and tile.owner == start.owner:
+                for neighbour in self.get_hex_all_neighbors(tile):
+                    if neighbour and neighbour not in visited:
+                        if not neighbour.doodad or neighbour.owner != start.owner:
+                            visited.append(neighbour)
+                            queue.append((neighbour, level + 1))
+
+        return visited
+
     def get_identical_neighboring_hexes(self, tile : Hex):
         return self.__bfs_up_to_level(tile, -1, True)
 
     def get_neighbors_at_level(self, tile : Hex, levels : int):
         return self.__bfs_up_to_level(tile, levels - 1)
 
-    # TODO: add unit movement (or get the hexes that a unit can move to)
+    # Move the unit from one hex to another
+    def move_unit(self, start_hex : Hex, end_hex : Hex, action_list : ActionHandler.ActionList):
+        if not start_hex or not end_hex:
+            return
+
+        print(f"start_hex -> {start_hex.get_position()}, end_hex -> {end_hex.get_position()}")
+
+        # If there is no doodad, there is nothing to move
+        if start_hex.doodad == None:
+            return
+
+        valid_tiles = self.get_movable_tiles(start_hex, start_hex.doodad.get_move_range())
+        print(f"move range : {start_hex.doodad.get_move_range()}")
+        # for tile in valid_tiles:
+        #     print(f"valid tile -> {tile.get_position()}")
+
+        if end_hex not in valid_tiles:
+            return
+        # start_hex.doodad.set_can_action(False)
+
+        print("Move the unit")
+
+        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(end_hex.doodad), copy.deepcopy(start_hex.doodad), 'doodad', end_hex))
+        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, end_hex.owner, start_hex.owner, 'owner', end_hex))
+        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(start_hex.doodad), None, 'doodad', start_hex))
 
 # Index of each neighbour
 #            _____

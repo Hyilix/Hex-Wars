@@ -14,6 +14,9 @@ class Doodad:
     def reload_doodad(self):
         pass
 
+    def get_move_range(self):
+        return 0
+
 # NOTE:
 # Owner convention:
 #  -1 ->  tile not existing
@@ -44,6 +47,9 @@ class Unit(Controllable):
         self.defence = defence
         self.attack = attack
         self.type = 0
+
+    def get_move_range(self):
+        return self.move_range
 
     def get_type(self):
         return "unit"
