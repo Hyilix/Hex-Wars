@@ -100,12 +100,10 @@ class HexMap:
         return visited
 
     def get_identical_neighboring_hexes(self, tile : Hex):
-        # It's super slow to fill all of these up. Maybe BFS isn't the smartest solution, but it will have to do for now
         return self.__bfs_up_to_level(tile, -1, True)
 
     def get_neighbors_at_level(self, tile : Hex, levels : int):
         return self.__bfs_up_to_level(tile, levels - 1)
-
 
     # TODO: add unit movement (or get the hexes that a unit can move to)
 

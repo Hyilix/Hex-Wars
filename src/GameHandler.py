@@ -211,9 +211,6 @@ class GameHandler:
     def draw_menu_title(self):
         self.__menu.draw_title()
 
-    # def draw_map_previews(self):
-    #     self.__menu.spread_maps()
-
     def draw_every_frame(self):
         if self.__renderer:
             self.draw_renderer_chunks()
@@ -224,7 +221,6 @@ class GameHandler:
         if self.__menu:
             self.draw_menu_title()
             self.draw_menu_buttons()
-            # self.draw_map_previews()
 
     def set_new_map_editor(self):
         if self.__is_editor_set_up():

@@ -1,6 +1,5 @@
 from Doodads import Doodad
 
-# TODO: add this to a yaml/json settings
 DEFAULT_HEX_INCOME = 1
 
 class Hex:

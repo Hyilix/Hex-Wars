@@ -90,7 +90,7 @@ class Lobby(Menu):
 
         self.clear_buttons()
 
-        self.color_scheme = [colors.gray_light, None, None, None, None, None, None]
+        self.color_scheme = [colors.gray_dark, None, None, None, None, None, None]
         self.available_colors = colors.available_colors
 
     def add_buttons(self, buttons):
