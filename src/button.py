@@ -20,6 +20,14 @@ class Button:
 
         self.active = True
 
+        self.__str_data : str = None
+
+    def set_str_data(self, data):
+        self.__str_data = data
+
+    def get_str_data(self):
+        return self.__str_data
+
     def change_pos(self, new_pos : tuple[int, int]):
         self.__pos = new_pos
 
@@ -132,6 +140,9 @@ class TextureButton(Button):
         super().change_pos(new_pos)
         self.__highlight.x = new_pos[0]
         self.__highlight.y = new_pos[1]
+
+    def set_texture(self, texture : pygame.Surface):
+        self.__texture = texture
 
     def load_texture(self, path : str):
         old_size = self.__texture.get_size()

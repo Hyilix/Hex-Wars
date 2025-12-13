@@ -274,25 +274,34 @@ class MapPicker(Menu):
 
         self.maps = get_map_previews_by_player_count(player_count)
 
+        buttons = []
+        for game_map in self.maps:
+            map_button = button.TextureButton((0, 0), game_map[1].get_size(), ButtonHandler.switch_to_gameplay)
+            map_button.set_texture(game_map[1])
+            map_button.set_str_data(game_map[0])
+            buttons.append(map_button)
+
+        self.add_buttons(buttons)
+        self.spread_buttons()
+
     # Spread the buttons evenly on the tab, having equal distance between them on the x-axis
-    def spread_maps(self, buttons_per_row : int = 0):
+    def spread_buttons(self, y_offset : int = 0, start_index : int = 0):
         screen_size = self.get_screen().get_size()
 
         y_offset = 10
         x_offset = 10
 
-        if buttons_per_row == 0:
-            # Calculate how many buttons can fit with proper spacing
-            button_width = self.maps[0][1].get_size()[0]
-            available_width = screen_size[0] - (2 * x_offset)
+        # Calculate how many buttons can fit with proper spacing
+        button_width = self.get_buttons()[0].get_size()[0]
+        available_width = screen_size[0] - (2 * x_offset)
 
-            # Estimate spacing (use a minimum spacing value)
-            min_spacing = 10
-            buttons_per_row = max(1, available_width // (button_width + min_spacing))
+        # Estimate spacing (use a minimum spacing value)
+        min_spacing = 10
+        buttons_per_row = max(1, available_width // (button_width + min_spacing))
 
         # Calculate spacing between buttons
         available_width = screen_size[0] - (2 * x_offset)
-        button_width = self.maps[0][1].get_size()[0]
+        button_width = self.get_buttons()[0].get_size()[0]
 
         # Calculate spacing to distribute buttons evenly
         total_button_width = button_width * buttons_per_row
@@ -302,12 +311,11 @@ class MapPicker(Menu):
         # Set button positions
         row = 0
         col = 0
-        for map_tuple in self.maps:
-            map_surf = map_tuple[1]
+        for button in self.get_buttons():
             x_pos = x_offset + spacing + col * (button_width + spacing)
-            y_pos = y_offset + row * (map_surf.get_size()[1] + y_offset)
+            y_pos = y_offset + row * (button.get_size()[1] + y_offset)
 
-            self.get_screen().blit(map_surf, (x_pos, y_pos))
+            button.change_pos((x_pos, y_pos))
 
             # Move to next column, or wrap to next row
             col += 1
@@ -315,3 +323,21 @@ class MapPicker(Menu):
                 col = 0
                 row += 1
 
+
+    # def spread_buttons(self, y_offset = 0, start_index = 0):
+    #     y_offset = 20
+    #     no_buttons = len(self.__buttons)
+    #
+    #     # The half of the screen
+    #     x_pos = self.__screen.get_size()[0] // 2 - self.__buttons[0].get_size()[0] // 2
+    #     y_pos = self.__screen.get_size()[1] // 2
+    #
+    #     y_pos -= (self.__buttons[0].get_size()[1] + y_offset) * (no_buttons // 2)
+    #     if no_buttons % 2 == 1:
+    #         y_pos -= self.__buttons[0].get_size()[1] // 2
+    #
+    #     y_step = self.__buttons[0].get_size()[1] + y_offset
+    #
+    #     for button in self.__buttons:
+    #         button.change_pos((x_pos, y_pos))
+    #         y_pos += y_step

@@ -230,21 +230,9 @@ class Editor:
     def is_blocked(self):
         return self.__is_blocked
 
-    # Convert from string to pair of ints
-    def __map_size_from_str(self, map_size : str):
-        if map_size.count('x') == 1:
-            width, height = map(int, map_size.split('x'))
-            return (int(width), int(height))
-        else:
-            print("Invalid map size format")
-            return None
-
-    def __map_size_to_str(self, map_size : tuple[int, int]):
-        return str(map_size[0]) + 'x' + str(map_size[1])
-
     # Change map dimension and fire event to change hexmap
     def change_map_dimensions(self):
-        new_dims = self.__map_size_from_str(self.__map_size)
+        new_dims = utils.map_size_from_str(self.__map_size)
 
         if new_dims == None:
             return
@@ -268,7 +256,7 @@ class Editor:
 
             self.__hex_map = self.__config.get("Map")
             self.__renderer.reload_renderer(self.__hex_map)
-            self.__map_size = self.__map_size_to_str(self.__hex_map.dimensions)
+            self.__map_size = utils.map_size_to_str(self.__hex_map.dimensions)
 
             self.__players = self.__config.get("Players")
 
@@ -386,7 +374,7 @@ class Editor:
                 self.load_info.toggle_render()
             if self.map_info.to_render():
                 self.map_info.toggle_render()
-                self.__map_size = self.__map_size_to_str(self.__hex_map.dimensions)
+                self.__map_size = utils.map_size_to_str(self.__hex_map.dimensions)
 
             self.__is_blocked = False
 

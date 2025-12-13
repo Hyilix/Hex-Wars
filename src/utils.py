@@ -286,3 +286,16 @@ def state_handling(self, tile_list : list[Hex.Hex], action_list):
                 modified_tiles.append(central_tile)
 
     return modified_tiles
+
+# Convert from string to pair of ints
+def map_size_from_str(map_size : str):
+    if map_size.count('x') == 1:
+        width, height = map(int, map_size.split('x'))
+        return (int(width), int(height))
+    else:
+        print("Invalid map size format")
+        return None
+
+def map_size_to_str(map_size : tuple[int, int]):
+    return str(map_size[0]) + 'x' + str(map_size[1])
+

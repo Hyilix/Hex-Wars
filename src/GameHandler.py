@@ -2,6 +2,7 @@ import pygame
 
 import GameRenderer
 import Editor
+import GameplayHandler
 import HexMap
 import Menu
 
@@ -43,6 +44,9 @@ class GameHandler:
             self.__screen : pygame.Surface = None
             self.__color_scheme : list[tuple[int, int, int]] = None
 
+            self.__gameplay : GameplayHandler.Gameplay = None
+            self.__map_to_load : str = ""
+
             self.__game_running = False
 
             GameHandler.__initialized = True
@@ -55,6 +59,9 @@ class GameHandler:
 
     def __is_menu_set_up(self):
         return self.__menu
+
+    def set_map_to_load(self, map_to_load):
+        self.__map_to_load = map_to_load
 
     def set_color_scheme(self, scheme : list[tuple[int, int, int]]):
         self.__color_scheme = scheme
@@ -112,6 +119,10 @@ class GameHandler:
     def create_default_picker_menu(self):
         self.__menu = Menu.MapPicker(self.__screen)
 
+    def create_default_gameplay(self):
+        self.__gameplay = GameplayHandler.Gameplay(self.__renderer, self.__hex_map, self.__screen.get_size())
+        self.__gameplay.load_game(self.__map_to_load)
+
     def picker_load_maps(self):
         self.__menu.load_maps(self.__color_scheme)
 
@@ -138,6 +149,7 @@ class GameHandler:
         self.__renderer = None
         self.__menu = None
         self.__camera = None
+        self.__gameplay = None
 
     def switch_tab(self, next_menu):
         self.__current_tab = next_menu
@@ -199,8 +211,8 @@ class GameHandler:
     def draw_menu_title(self):
         self.__menu.draw_title()
 
-    def draw_map_previews(self):
-        self.__menu.spread_maps()
+    # def draw_map_previews(self):
+    #     self.__menu.spread_maps()
 
     def draw_every_frame(self):
         if self.__renderer:
@@ -212,10 +224,11 @@ class GameHandler:
         if self.__menu:
             self.draw_menu_title()
             self.draw_menu_buttons()
-            self.draw_map_previews()
+            # self.draw_map_previews()
 
     def set_new_map_editor(self):
-        self.__hex_map = self.__editor.get_hex_map()
+        if self.__is_editor_set_up():
+            self.__hex_map = self.__editor.get_hex_map()
 
     def center_camera(self):
         if self.__is_camera_set_up():
@@ -238,6 +251,10 @@ class GameHandler:
 
         elif self.__current_tab == CurrentTab.GAMEPLAY:
             print("Current Tab -> GAMEPLAY")
+            self.create_default_camera()
+            self.create_default_hexmap()
+            self.create_default_renderer()
+            self.create_default_gameplay()
 
         elif self.__current_tab == CurrentTab.LOBBY:
             self.__color_scheme = None

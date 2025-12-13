@@ -183,11 +183,16 @@ def deselect_doodads(tab):
 def select_this(button):
     button.set_highlight(True)
 
+# Map picker buttons
+def switch_to_gameplay(game_handler, button):
+    game_handler.set_map_to_load(button.get_str_data())
+    game_handler.switch_tab(GameHandler.CurrentTab.GAMEPLAY)
+
 # Loader functions
 def load_main_buttons():
     buttons : list[button.TextureButton] = []
 
-    menu = button.TextureButton((0, 0), (64 ,64), open_menu)
+    menu = button.TextureButton((0, 0), (64, 64), open_menu)
     menu.load_texture(DEFAULT_UI_PATH + "main/Menu Button.png")
     buttons.append(menu)
 
