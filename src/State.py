@@ -7,6 +7,7 @@ class State:
     def __init__(self, owner : int, central_hex : Hex):
         self.owner = owner
         self.central_hex = central_hex
+        central_hex.set_central_hex_status(True)
 
         # The hexes of the state
         self.state_hexes = [central_hex]
@@ -28,11 +29,22 @@ class State:
     def get_central_hex(self):
         return self.central_hex
 
+    def get_state_hexes(self):
+        return self.state_hexes
+
     def set_central_hex(self, central_hex : Hex):
-        self.central_hex = central_hex
+        if central_hex in self.state_hexes:
+            self.central_hex.set_central_hex_status(False)
+            self.central_hex = central_hex
+            self.central_hex.set_central_hex_status(True)
+
+    def find_new_central_hex(self):
+        self.central_hex = self.state_hexes[0]
+        self.state_hexes[0].set_central_hex_status(True)
+        return self.central_hex
 
     # Determine if a hex is inside an estate
-    def is_hex_in_estate(self, tile : Hex):
+    def is_hex_in_state(self, tile : Hex):
         return tile in self.state_hexes
 
     # Update the income of the state
@@ -49,36 +61,101 @@ class State:
             self.is_bankrupt = True
             self.money = 0
 
+    def set_state_hexes(self, hexes):
+        self.state_hexes = hexes[:]
+
     # Get the hexes of a state starting from the central hex
     def hex_march(self, hexmap : HexMap):
         hexqueue = deque()
         hexqueue.append(self.central_hex)
-
         visited = [self.central_hex]
 
+        other_central_hexes = []
+
         # Search all the hexes for a state
-        while hexqueue[0]:
-            neighbors = hexmap.get_hex_all_neighbors(hexqueue[0])
+        while hexqueue:
+            current = hexqueue.popleft()
+            neighbors = hexmap.get_hex_all_neighbors(current)
             for tile in neighbors:
-                if tile.get_owner() == self.owner and tile not in visited:
+                if tile and tile.get_owner() == self.owner and tile not in visited:
                     hexqueue.append(tile)
                     visited.append(tile)
-
-            hexqueue.popleft()
+                    # print("Found new tile in hex march")
+                    if tile.get_central_hex_status() and tile != self.central_hex:
+                        other_central_hexes.append(tile)
 
         # Copy the visited hexes onto the state_hexes
         self.state_hexes = visited[:]
 
+        return other_central_hexes
+
+    # Search only for tiles in the included_tiles
+    def restrained_hex_march(self, hexmap : HexMap, included_tiles : list[Hex]):
+        hexqueue = deque()
+        hexqueue.append(self.central_hex)
+        visited = [self.central_hex]
+
+        other_central_hexes = []
+
+        # Search all the hexes for a state
+        while hexqueue:
+            current = hexqueue.popleft()
+            neighbors = hexmap.get_hex_all_neighbors(current)
+            for tile in neighbors:
+                if tile and tile.get_owner() == self.owner and tile not in visited and tile in included_tiles:
+                    hexqueue.append(tile)
+                    visited.append(tile)
+                    # print(f"Found new tile in hex march, {tile.get_position()}")
+                    if tile.get_central_hex_status() and tile != self.central_hex:
+                        other_central_hexes.append(tile)
+
+        # Copy the visited hexes onto the state_hexes
+        self.state_hexes = visited[:]
+
+        # if len(other_central_hexes):
+        #     self.central_hex.set_central_hex_status(False)
+        #     self.central_hex = other_central_hexes[0]
+        #     self.central_hex.set_central_hex_status(True)
+
     # Add a hex to the state_hexes
     def add_hex(self, tile : Hex):
         self.state_hexes.append(tile)
-        # TODO: check new hex neighbors and merge the states
 
     # Remove a hex from the state_hexes
     def remove_hex(self, tile : Hex):
         self.state_hexes.remove(tile)
-        # TODO: check states for separation
+        if not self.is_state_valid():
+            print("We are an invalid state")
 
-    # TODO: class methods for splitting, merging states
-    # TODO: class methods for getting the hexes of states, adding/removing hexes from states
+    def state_contains_tile(self, tile : Hex):
+        return tile in self.state_hexes
+
+    def is_state_valid(self):
+        state_valid = len(self.state_hexes) > 1
+        return state_valid
+
+    def split_state(self, hexmap : HexMap, states):
+        former_state = self.state_hexes[:]
+
+        self.hex_march(hexmap)
+
+        for tile in self.state_hexes:
+            if tile in former_state:
+                if tile.get_central_hex_status() and tile != self.central_hex:
+                    self.central_hex.set_central_hex_status(False)
+                    self.central_hex = tile
+                    self.central_hex.set_central_hex_status(True)
+                former_state.remove(tile)
+
+        print(f"Number of hexes left: {len(former_state)}")
+
+        # If there are any tiles left, create and split the states
+        if len(former_state) >= 1:
+            former_state[0].set_central_hex_status(True)
+            new_state = State(self.owner, former_state[0])
+            new_state.set_state_hexes(former_state)
+
+            states.append(new_state)
+
+            new_state.split_state(hexmap, states)
 

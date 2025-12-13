@@ -2,11 +2,18 @@ import pygame
 
 import GameRenderer
 import Editor
+import GameplayHandler
+import HexMap
 import Menu
+
+import colors
+
+import KeyboardState
+import ButtonHandler
 
 from enum import Enum
 
-class CurrentMenu(Enum):
+class CurrentTab(Enum):
     MAINMENU = 1
     LOBBY = 2
     MAPPICKER = 3
@@ -20,19 +27,242 @@ class GameHandler:
 
     def __new__(cls):
         if cls.__instance is None:
-            cls.__instance = super.__new__(cls)
+            cls.__instance = super().__new__(cls)
         return cls.__instance
 
     def __init__(self):
         if not GameHandler.__initialized:
-            self.__current_tab = CurrentMenu.MAINMENU
+            self.__current_tab = None
 
-            self.__renderer = None
-            self.__editor = None
-            self.__menu = None
+            self.__renderer : GameRenderer.GameRenderer = None
+            self.__editor : Editor.Editor = None
+            self.__menu : Menu.Menu = None
+
+            self.__camera : GameRenderer.Camera = None
+            self.__hex_map : HexMap.HexMap = None
+
+            self.__screen : pygame.Surface = None
+            self.__color_scheme : list[tuple[int, int, int]] = None
+
+            self.__gameplay : GameplayHandler.Gameplay = None
+            self.__map_to_load : str = ""
+
+            self.__game_running = False
 
             GameHandler.__initialized = True
 
-    def switch_menu(self, next_menu):
+    def __is_editor_set_up(self):
+        return self.__screen and self.__editor and self.__hex_map and self.__camera
+
+    def __is_camera_set_up(self):
+        return self.__camera
+
+    def __is_menu_set_up(self):
+        return self.__menu
+
+    def set_map_to_load(self, map_to_load):
+        self.__map_to_load = map_to_load
+
+    def set_color_scheme(self, scheme : list[tuple[int, int, int]]):
+        self.__color_scheme = scheme
+
+    def start_game(self):
+        self.__game_running = True
+
+    def stop_game(self):
+        self.__game_running = False
+
+    def get_game_running(self):
+        return self.__game_running
+
+    def get_screen(self):
+        return self.__screen
+
+    # It is expected that the set_screen method will be called after initializing the handler
+    def set_screen(self, screen):
+        self.__screen = screen
+
+    def create_default_hexmap(self):
+        self.__hex_map = HexMap.HexMap(20, 20, 0)
+
+    def create_default_renderer(self):
+        self.__renderer = GameRenderer.GameRenderer(self.__screen, self.__camera, self.__color_scheme)
+        self.__renderer.load_hex_surface("HexTile.png", 1)
+        self.__renderer.init_chunks(self.__hex_map.dimensions)
+        self.__renderer.get_visible_chunks()
+        self.__renderer.load_chunks(self.__hex_map)
+
+    def create_default_editor(self):
+        self.__editor = Editor.Editor(self.__renderer, self.__hex_map, self.__screen.get_size())
+
+    def create_default_camera(self):
+        self.__camera = GameRenderer.Camera(self.__screen.get_size(), (0, 0), 1)
+
+    def create_default_main_menu(self):
+        self.__menu = Menu.MainMenu(self.__screen)
+        self.__menu.add_buttons(ButtonHandler.load_menu_buttons())
+        self.__menu.spread_buttons()
+
+    def create_default_lobby_menu(self):
+        self.__menu = Menu.Lobby(self.__screen)
+
+        self.__menu.add_buttons(ButtonHandler.load_lobby_hexes())
+        self.__menu.spread_buttons()
+
+        self.__menu.add_buttons(ButtonHandler.load_lobby_leave_buttons())
+        self.__menu.spread_buttons(100, 6)
+
+        self.__menu.add_buttons(ButtonHandler.load_lobby_buttons())
+        self.__menu.add_buttons(ButtonHandler.load_lobby_join_buttons())
+        self.__menu.move_join_next()
+
+    def create_default_picker_menu(self):
+        self.__menu = Menu.MapPicker(self.__screen)
+
+    def create_default_gameplay(self):
+        self.__gameplay = GameplayHandler.Gameplay(self.__renderer, self.__hex_map, self.__screen.get_size())
+        self.__gameplay.load_game(self.__map_to_load)
+
+    def picker_load_maps(self):
+        self.__menu.load_maps(self.__color_scheme)
+
+    def lobby_join_player(self):
+        self.__menu.join_player()
+        self.__menu.move_join_next()
+
+    def lobby_remove_player(self, button):
+        self.__menu.remove_player(button)
+
+    def lobby_change_color(self, button):
+        self.__menu.change_next_color(button)
+
+    def lobby_get_color_scheme(self):
+        self.__color_scheme = self.__menu.get_color_scheme()
+
+    def lobby_found_map(self):
+        return self.__menu.found_maps()
+
+    def clear_everything(self):
+        self.__hex_map = None
+        # self.__color_scheme = None
+        self.__editor = None
+        self.__renderer = None
+        self.__menu = None
+        self.__camera = None
+        self.__gameplay = None
+
+    def switch_tab(self, next_menu):
         self.__current_tab = next_menu
+        self.clear_everything()
+        self.handle_tabs()
+
+    def pan_camera(self, new_coord : tuple[int, int]):
+        if self.__is_camera_set_up() and (self.__editor == None or not self.__editor.is_blocked()):
+            # Pan the camera
+            if self.__camera.panning_mode == True:
+                (x_dir, y_dir) = (new_coord[0] - self.__camera.pan_pivot[0], new_coord[1] - self.__camera.pan_pivot[1])
+                self.__camera.add_direction((x_dir, y_dir))
+                self.__renderer.get_visible_chunks()
+
+    def set_camera_pan_pivot(self):
+        if self.__is_camera_set_up():
+            self.__camera.pan_pivot = pygame.mouse.get_pos()
+
+    def set_camera_panning_mode(self, mode : bool):
+        if self.__is_camera_set_up():
+            self.__camera.panning_mode = mode
+
+    def set_camera_zoom(self, val):
+        if self.__is_camera_set_up():
+            self.__renderer.set_zoom(round(val, 1) * self.__renderer.zoom_settings[2] + self.__renderer.current_zoom)
+
+    def editor_handle_mouse_action(self, mouse_pos, click_once = False):
+        if not self.__is_editor_set_up():
+            return
+
+        tile_pos = self.__camera.get_tile_at_position(mouse_pos)
+        # Check if tile is within bounds
+        if (tile_pos[0] >= 0 and tile_pos[0] < self.__hex_map.dimensions[0] and
+            tile_pos[1] >= 0 and tile_pos[1] < self.__hex_map.dimensions[1]):
+            current_tile = self.__hex_map.get_tile_at_position(tile_pos)
+            self.__editor.handle_mouse_action(mouse_pos, current_tile, click_once)
+        elif click_once == True:
+            self.__editor.handle_mouse_action(mouse_pos, None, click_once)
+
+    def editor_handle_keyboard(self):
+        if self.__is_editor_set_up():
+            self.__editor.handle_keyboard_action(self.__screen)
+
+    def menu_handle_mouse_action(self, mouse_pos, click_once = False):
+        if not self.__is_menu_set_up() or click_once == False:
+            return
+
+        self.__menu.buttons_click_action(mouse_pos, GameHandler())
+
+    def draw_renderer_chunks(self):
+        self.__renderer.draw_chunks()
+
+    def draw_editor_tabs(self):
+        self.__editor.render_tabs(self.__screen)
+
+    def draw_menu_buttons(self):
+        self.__menu.draw_buttons()
+
+    def draw_menu_title(self):
+        self.__menu.draw_title()
+
+    # def draw_map_previews(self):
+    #     self.__menu.spread_maps()
+
+    def draw_every_frame(self):
+        if self.__renderer:
+            self.draw_renderer_chunks()
+
+        if self.__editor and self.__renderer:
+            self.draw_editor_tabs()
+
+        if self.__menu:
+            self.draw_menu_title()
+            self.draw_menu_buttons()
+            # self.draw_map_previews()
+
+    def set_new_map_editor(self):
+        if self.__is_editor_set_up():
+            self.__hex_map = self.__editor.get_hex_map()
+
+    def center_camera(self):
+        if self.__is_camera_set_up():
+            self.__camera.set_position(self.__renderer.get_map_center(self.__hex_map))
+            self.__renderer.get_visible_chunks()
+
+    def handle_tabs(self):
+        if self.__current_tab == CurrentTab.MAINMENU:
+            print("Current Tab -> MAINMENU")
+            self.create_default_main_menu()
+
+        elif self.__current_tab == CurrentTab.EDITOR:
+            print("Current Tab -> EDITOR")
+            color_scheme = [colors.gray_dark, colors.red, colors.blue, colors.green, colors.yellow, colors.purple, colors.cyan, colors.pink]
+            self.set_color_scheme(color_scheme)
+            self.create_default_camera()
+            self.create_default_hexmap()
+            self.create_default_renderer()
+            self.create_default_editor()
+
+        elif self.__current_tab == CurrentTab.GAMEPLAY:
+            print("Current Tab -> GAMEPLAY")
+            self.create_default_camera()
+            self.create_default_hexmap()
+            self.create_default_renderer()
+            self.create_default_gameplay()
+
+        elif self.__current_tab == CurrentTab.LOBBY:
+            self.__color_scheme = None
+            print("Current Tab -> LOBBY")
+            self.create_default_lobby_menu()
+
+        elif self.__current_tab == CurrentTab.MAPPICKER:
+            print("Current Tab -> MAPPICKER")
+            self.create_default_picker_menu()
+            self.picker_load_maps()
 

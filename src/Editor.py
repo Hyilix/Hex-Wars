@@ -14,6 +14,7 @@ import Collisions_2d
 import button
 import colors
 import Events
+import utils
 
 import ActionHandler
 import KeyboardState
@@ -62,6 +63,17 @@ class Tab:
     # Buttons' positions don't matter, as they will be set by spread_buttons method
     def fill_buttons_list(self, buttons : list[button.Button]):
         self.__buttons = buttons.copy()
+
+    def add_buttons(self, buttons : list[button.Button]):
+        last_pos = self.__buttons[-1].get_pos()
+
+        last_y = last_pos[1] + 2 * buttons[0].get_size()[1]
+        print(f"Last y pos: {last_y}")
+
+        for button in buttons:
+            button.change_pos((self.__size[0] // 2 - button.get_size()[0] // 2, last_y))
+            last_y += button.get_size()[1] + 10
+            self.__buttons.append(button)
 
     # Spread the buttons evenly on the tab, having equal distance between them on the x-axis
     def spread_buttons(self, buttons_per_row : int = 0):
@@ -156,7 +168,7 @@ class Brush:
             # Set new doodad
             if self.__owner >= 0:
                 if tile.doodad == None or self.__doodad == None or tile.doodad.get_name() != self.__doodad.get_name():
-                    if tile.doodad != self.__doodad:
+                    if tile.doodad != self.__doodad and (tile.doodad == None or tile.doodad.get_name() != "Base"):
                         action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(tile.doodad), copy.deepcopy(self.__doodad), 'doodad', tile))
                         if tile not in tile_list:
                             tile_list.append(tile)
@@ -170,10 +182,13 @@ class Editor:
         self.__hex_map = hex_map
 
         self.__map_name = "New Map"
-        self.__players = []
+        self.__players = [None, None, None, None, None, None]
         self.__current_player = 0
 
         self.__screen_size = screen_size
+
+        # The map size, written in string
+        self.__map_size = str(hex_map.dimensions[0]) + "x" + str(hex_map.dimensions[1])
 
         self.__config = {
                 "Hash": 0,
@@ -203,13 +218,34 @@ class Editor:
         self.utiltab = Tab((0, 0), (screen_size[0] // 4, screen_size[1]), colors.tab_color)
         self.utiltab.fill_buttons_list(ButtonHandler.load_main_buttons())
         self.utiltab.spread_buttons()
+        self.utiltab.add_buttons(ButtonHandler.load_misc_buttons())
 
         self.help_info = InfoTabs.InfoHelp((screen_size[0] // 12, screen_size[1] // 12))
         self.save_info = InfoTabs.InfoSave((screen_size[0] // 12, screen_size[1] // 12))
         self.load_info = InfoTabs.InfoLoad((screen_size[0] // 12, screen_size[1] // 12))
+        self.map_info = InfoTabs.InfoMap((screen_size[0] // 12, screen_size[1] // 12))
+
+        pygame.event.post(pygame.event.Event(Events.CENTER_CAMERA))
 
     def is_blocked(self):
         return self.__is_blocked
+
+    # Change map dimension and fire event to change hexmap
+    def change_map_dimensions(self):
+        new_dims = utils.map_size_from_str(self.__map_size)
+
+        if new_dims == None:
+            return
+
+        print("Changing map dimension")
+
+        del self.__hex_map
+
+        self.__hex_map = HexMap.HexMap(new_dims[0], new_dims[1], 0)
+        self.__renderer.reload_renderer(self.__hex_map)
+        self.__config["Map"] = self.__hex_map
+
+        pygame.event.post(pygame.event.Event(Events.MAP_CHANGED))
 
     # Load a game and save the game configuration
     def load_game(self):
@@ -220,33 +256,62 @@ class Editor:
 
             self.__hex_map = self.__config.get("Map")
             self.__renderer.reload_renderer(self.__hex_map)
+            self.__map_size = utils.map_size_to_str(self.__hex_map.dimensions)
+
+            self.__players = self.__config.get("Players")
+
+            self.action_handler.deep_clear()
 
             pygame.event.post(pygame.event.Event(Events.MAP_CHANGED))
-
-    def get_editor_map(self):
-        return self.__hex_map
 
     # Save the current game
     def save_game(self):
         MapHandling.save_map(self.__config, self.__renderer)
 
+    def get_hex_map(self):
+        return self.__hex_map
+
+    def get_players(self):
+        return self.__players
+
+    def get_renderer(self):
+        return self.__renderer
+
+    # Change the owner used for the brush
     def change_owner(self, new_owner):
         self.brush.change_owner(new_owner)
 
+    # Change the doodad used for the brush
     def change_doodad(self, new_doodad):
         self.brush.change_doodad(new_doodad)
 
+    # Change the fill used for the brush
     def set_fill(self, fill : bool):
         self.brush.change_fill(fill)
 
+    # Apply brush to the map
     def apply_brush(self, start_hex : Hex.Hex):
         tile_list : list[Hex.Hex] = []
         action_list = self.brush.apply_brush(self.__hex_map, start_hex, tile_list)
 
         self.action_handler.add_action_list(action_list)
 
+        # Make new action list to put the towncenter and the player
+        state_action_list = ActionHandler.ActionList([])
+
+        modified_tiles = []
+
+        if len(tile_list) > 0:
+            modified_tiles = utils.state_handling(self, tile_list, state_action_list)
+
+        self.action_handler.extend_last_list(state_action_list)
+
+        if modified_tiles:
+            tile_list.extend(modified_tiles)
+
         self.__renderer.update_list_chunks(tile_list)
         tile_list = []
+
 
     def make_new_action_list(self):
         self.__current_action_list = ActionHandler.ActionList([])
@@ -256,6 +321,7 @@ class Editor:
             self.action_handler.add_action_list(self.__current_action_list)
         self.__current_action_list = None
 
+    # Render everything
     def render_tabs(self, screen):
         if self.__tabs_visible:
             if self.__active_tab == TabMenu.WORLD:
@@ -266,7 +332,9 @@ class Editor:
         self.help_info.render(screen)
         self.save_info.render_with_name(screen, self.__config.get("Name"))
         self.load_info.render_with_name(screen, self.__config.get("Name"))
+        self.map_info.render_with_name(screen, self.__map_size)
 
+    # Handle the mouse input
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
         if self.__is_blocked:
             return
@@ -281,7 +349,7 @@ class Editor:
 
         if self.__map_focus == True and tile != None:
             self.apply_brush(tile)
-        elif click_once == True:
+        elif click_once == True and self.__tabs_visible:
             if first_collision:
                 self.utiltab.buttons_click_action(mouse_pos, self)
             elif second_collision:
@@ -290,6 +358,7 @@ class Editor:
         self.utiltab.clear_clicked_inside()
         self.worldtab.clear_clicked_inside()
 
+    # Handle the keyboard input
     def handle_keyboard_action(self, screen):
         keyboardstate = KeyboardState.KeyboardState()
         key_pressed = keyboardstate.key_pressed
@@ -303,6 +372,9 @@ class Editor:
                 self.save_info.toggle_render()
             if self.load_info.to_render():
                 self.load_info.toggle_render()
+            if self.map_info.to_render():
+                self.map_info.toggle_render()
+                self.__map_size = utils.map_size_to_str(self.__hex_map.dimensions)
 
             self.__is_blocked = False
 
@@ -314,6 +386,9 @@ class Editor:
             if self.load_info.to_render():
                 self.load_game()
                 self.load_info.toggle_render()
+            if self.map_info.to_render():
+                self.change_map_dimensions()
+                self.map_info.toggle_render()
 
             self.__is_blocked = False
 
@@ -331,17 +406,22 @@ class Editor:
                         self.__switch_tab_visility()
 
                 if key_pressed == pygame.K_h:
-                    if not self.save_info.to_render() and not self.load_info.to_render():
+                    if not self.save_info.to_render() and not self.load_info.to_render() and not self.map_info.to_render():
                         self.help_info.toggle_render()
                         self.__is_blocked = self.help_info.to_render()
 
                 if key_pressed == pygame.K_l:
-                    if not self.help_info.to_render() and not self.save_info.to_render():
+                    if not self.help_info.to_render() and not self.save_info.to_render() and not self.map_info.to_render():
                         self.load_info.toggle_render()
                         self.__is_blocked = self.load_info.to_render()
 
+                if key_pressed == pygame.K_m:
+                    if not self.help_info.to_render() and not self.save_info.to_render() and not self.load_info.to_render():
+                        self.map_info.toggle_render()
+                        self.__is_blocked = self.map_info.to_render()
+
                 if key_pressed == pygame.K_s and keyboardstate.is_shift_hold == False:
-                    if not self.help_info.to_render() and not self.load_info.to_render():
+                    if not self.help_info.to_render() and not self.load_info.to_render() and not self.map_info.to_render():
                         self.save_info.toggle_render()
                         self.__is_blocked = self.save_info.to_render()
 
@@ -362,11 +442,24 @@ class Editor:
                     if new_name != None:
                         self.__config["Name"] = new_name
 
+            if self.map_info.to_render():
+                if keyboardstate.unicode != None and keyboardstate.key_pressed != None and keyboardstate.key_is_down == True:
+                    new_size = self.map_info.add_key(keyboardstate.unicode, keyboardstate.key_pressed, self.__map_size)
+
+                    if new_size != None:
+                        self.__map_size = new_size
+
+    # Handle the action handler
     def handle_action_handler(self, to_undo : bool):
+        actions = []
         if to_undo:
-            self.action_handler.undo_last_action()
+            actions = self.action_handler.undo_last_action()
         else:
-            self.action_handler.redo_last_action()
+            actions = self.action_handler.redo_last_action()
+
+        if actions:
+            utils.state_handling(self, actions, None)
+
         self.__renderer.load_chunks(self.__hex_map)
 
     # Local functions

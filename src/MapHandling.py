@@ -3,6 +3,7 @@ import datetime
 from typing import dataclass_transform
 import pytz
 import os
+import shutil
 
 import HexMap
 import Hex
@@ -50,14 +51,11 @@ def __make_next_dir(new_path : str):
     dir_path = str(new_path)
     dir_path = dir_path[:-1]
     # Find the next duplicate in limit
-    for i in range(MAX_DUPLICATE_FILE):
-        save_path = str(dir_path)
-        if i > 0:
-            save_path += "(" + str(i) + ")"
+    save_path = str(dir_path)
 
-        if not os.path.exists(save_path):
-            os.makedirs(save_path)
-            return save_path
+    if not os.path.exists(save_path):
+        os.makedirs(save_path)
+        return save_path
 
     return None
 
@@ -71,7 +69,7 @@ def __check_valid_map(dir_path : str):
 def __save_map_image(hex_map, renderer):
     map_surf = renderer.draw_entire_map_separate(hex_map)
 
-    map_surf = pygame.transform.scale(map_surf, (1000, 1000))
+    map_surf = pygame.transform.scale(map_surf, (256, 256))
     return map_surf
 
 # Save current game
@@ -91,7 +89,16 @@ def save_game(config : dict, save_name = None):
 
     if (dir_path == None):
         print("No directory file could be created")
-        return
+
+        # File already found, rewrite it
+        print(new_path)
+        if os.path.exists(new_path):
+            os.remove(new_path)
+            dir_path = __make_next_dir(new_path)
+        else:
+            print("Something went wrong")
+            # Something went wrong
+            return
 
     dir_path += "/"
 
@@ -151,7 +158,16 @@ def save_map(config : dict, renderer):
 
     if (dir_path == None):
         print("No directory file could be created")
-        return
+
+        # File already found, rewrite it
+        print(new_path)
+        if os.path.exists(new_path):
+            shutil.rmtree(new_path)
+            dir_path = __make_next_dir(new_path)
+        else:
+            print("Something went wrong")
+            # Something went wrong
+            return
 
     map_hash = __get_hash(map_name)
     info_file_path = dir_path + "/" + DEFAULT_INFO_NAME + DEFAULT_INFO_SUFFIX
@@ -178,10 +194,10 @@ def save_map(config : dict, renderer):
         database['Name'] = map_name
 
         # Put the player array to the database
-        database['Players'] = config.get("player_array")
+        database['Players'] = config.get("Players")
 
         # Put current player to the database
-        database['CurrentPlayer'] = config.get("current_player")
+        database['CurrentPlayer'] = config.get("CurrentPlayer")
 
         # Put map array to the database
         database['Map'] = config.get("Map")
@@ -199,4 +215,47 @@ def load_map(map_name : str):
             return pickle.load(info_file)
     else:
         return None
+
+def get_map_previews_by_player_count(num_players):
+    previews = []
+
+    # Check if maps directory exists
+    if not os.path.exists(DEFAULT_MAP_PATH):
+        return previews
+
+    # Iterate through each item in maps directory
+    for map_name in os.listdir(DEFAULT_MAP_PATH):
+        map_path = os.path.join(DEFAULT_MAP_PATH, map_name)
+
+        # Skip if not a directory
+        if not os.path.isdir(map_path):
+            continue
+
+        info_path = os.path.join(map_path, 'info.hmap')
+        preview_path = os.path.join(map_path, 'preview.png')
+
+        # Check if both required files exist
+        if not os.path.exists(info_path) or not os.path.exists(preview_path):
+            continue
+
+        try:
+            # Load the pickled map data
+            with open(info_path, 'rb') as f:
+                map_data = pickle.load(f)
+
+            # Count non-None players
+            if 'Players' in map_data:
+                player_count = sum(1 for p in map_data['Players'] if p is not None)
+
+                # If player count matches, load the preview
+                if player_count == num_players:
+                    preview_surface = pygame.image.load(preview_path)
+                    previews.append((map_name, preview_surface))
+
+        except (pickle.PickleError, IOError, pygame.error) as e:
+            # Skip maps that can't be loaded
+            print(f"Warning: Could not load map '{map_name}': {e}")
+            continue
+
+    return previews
 

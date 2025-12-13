@@ -19,83 +19,55 @@ import Editor
 
 pygame.init()
 
-screen_size = (1000, 600)
+screen_size = (1200, 800)
 screen = pygame.display.set_mode(screen_size)
 
 pygame.display.set_caption("Hex game")
 clock = pygame.time.Clock() 
 font = pygame.font.SysFont(None, 25)
 
-# Create a Camera
-# Note, use the window size as camera default
-camera_test = GameRenderer.Camera(screen_size, (0, 0), 1)
+game_handler = GameHandler.GameHandler()
+game_handler.set_screen(screen)
 
-# Create a GameRenderer
-color_scheme = [colors.gray_dark, colors.red, colors.blue, colors.green, colors.yellow, colors.purple, colors.cyan, colors.pink]
-renderer = GameRenderer.GameRenderer(screen, camera_test, color_scheme)
-
-renderer.load_hex_surface("HexTile.png", 1)
-
-# Create and fill a map
-test_hex_map = HexMap.HexMap(30, 30, 0)
-renderer.init_chunks(test_hex_map.dimensions)
-renderer.get_visible_chunks()
-renderer.load_chunks(test_hex_map)
-
-test_editor = Editor.Editor(renderer, test_hex_map, screen_size)
+# Set the first tab of the game
+game_handler.switch_tab(GameHandler.CurrentTab.MAINMENU)
 
 FPS = 144
 
-running = True
-while running:
-    screen.fill(renderer.background_color)  # background color
-    renderer.draw_chunks()
-    test_editor.render_tabs(screen)
+game_handler.start_game()
+
+while game_handler.get_game_running():
+    screen.fill(colors.gray_very_dark)  # background color
+    game_handler.draw_every_frame()
     keyboard_handled_this_frame = False
 
     for event in pygame.event.get():
         if event.type == pygame.MOUSEMOTION:
-            if test_editor.is_blocked() == False:
-                new_coord = pygame.mouse.get_pos()
-
-                # Pan the camera
-                if camera_test.panning_mode == True:
-                    win_size = pygame.display.get_window_size()
-                    (x_dir, y_dir) = (new_coord[0] - camera_test.pan_pivot[0], new_coord[1] - camera_test.pan_pivot[1])
-                    camera_test.add_direction((x_dir, y_dir))
-                    renderer.get_visible_chunks()
+            game_handler.pan_camera(pygame.mouse.get_pos())
 
         if event.type == pygame.QUIT:
-            running = False
+            game_handler.stop_game()
 
         elif event.type == pygame.MOUSEBUTTONDOWN:
             # Camera panning on R_CLICK
             if event.button == 3:
-                camera_test.pan_pivot = pygame.mouse.get_pos()
-                camera_test.panning_mode = True
+                game_handler.set_camera_pan_pivot()
+                game_handler.set_camera_panning_mode(True)
 
         elif event.type == pygame.MOUSEBUTTONUP:
             if event.button == 3:
-                camera_test.panning_mode = False
+                game_handler.set_camera_panning_mode(False)
 
         elif event.type == pygame.MOUSEWHEEL:
-            renderer.set_zoom(round(event.y, 1) * renderer.zoom_settings[2] + renderer.current_zoom)
+            game_handler.set_camera_zoom(event.y)
 
         keyboard_state = KeyboardState.KeyboardState()
 
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 1:  # Left mouse button
                 keyboard_state.parse_mouse_state(1, True)
-                mouse_pos = event.pos
-
-                tile_pos = camera_test.get_tile_at_position(mouse_pos)
-                # Check if tile is within bounds
-                if (tile_pos[0] >= 0 and tile_pos[0] < test_hex_map.dimensions[0] and
-                    tile_pos[1] >= 0 and tile_pos[1] < test_hex_map.dimensions[1]):
-                    current_tile = test_hex_map.get_tile_at_position(tile_pos)
-                    test_editor.handle_mouse_action(mouse_pos, current_tile, True)
-                else:
-                    test_editor.handle_mouse_action(mouse_pos, None, True)
+                game_handler.editor_handle_mouse_action(pygame.mouse.get_pos(), True)
+                game_handler.menu_handle_mouse_action(pygame.mouse.get_pos(), True)
 
             if event.button == 2:
                 keyboard_state.parse_mouse_state(2, True)
@@ -109,14 +81,8 @@ while running:
 
         if event.type == pygame.MOUSEMOTION:
             if keyboard_state.is_mouse1_down:
-                mouse_pos = event.pos
-
-                tile_pos = camera_test.get_tile_at_position(mouse_pos)
-                # Check if tile is within bounds
-                if tile_pos[0] >= 0 and tile_pos[0] < test_hex_map.dimensions[0]:
-                    if tile_pos[1] >= 0 and tile_pos[1] < test_hex_map.dimensions[1]:
-                        current_tile = test_hex_map.get_tile_at_position(tile_pos)
-                        test_editor.handle_mouse_action(mouse_pos, current_tile)
+                game_handler.editor_handle_mouse_action(pygame.mouse.get_pos())
+                game_handler.menu_handle_mouse_action(pygame.mouse.get_pos())
 
         if event.type == pygame.KEYDOWN:
             keyboard_state.parse_key_input(event.key, event.unicode, True)
@@ -127,12 +93,15 @@ while running:
         if event.type == Events.KEYBOARD_CHANGED:
             if not keyboard_handled_this_frame:
                 # Editor handle the keyboard
-                test_editor.handle_keyboard_action(screen)
+                game_handler.editor_handle_keyboard()
 
                 keyboard_handled_this_frame = True
 
         if event.type == Events.MAP_CHANGED:
-            test_hex_map = test_editor.get_editor_map()
+            game_handler.set_new_map_editor()
+
+        if event.type == Events.CENTER_CAMERA:
+            game_handler.center_camera()
 
     # Update display
     pygame.display.flip()

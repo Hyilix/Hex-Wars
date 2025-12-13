@@ -18,7 +18,7 @@ DEFAULT_TEXTURE_PATH : str = "../assets/textures/"
 DEFAULT_CHUNK_SIZE = (8, 8)
 
 # The zoom values to cache chunk resize
-CHUNK_ZOOM_CACHE = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0, 1.5, 2.0, 2.5, 3.0]
+CHUNK_ZOOM_CACHE = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 1.0, 1.5, 2.0]
 
 class Camera:
     def __init__(self, size : tuple[int, int], position : tuple[int, int], zoom : int):
@@ -167,7 +167,7 @@ class HexChunk:
         self.scale_surface(1 / self.chunk_scale)
 
 class GameRenderer:
-    def __init__(self, screen, camera : Camera, color_scheme, zoom_settings : tuple[float, float, float] = (0.5, 4, 0.5)): 
+    def __init__(self, screen, camera : Camera, color_scheme, zoom_settings : tuple[float, float, float] = (0.5, 2, 0.5)): 
         self.chunk_size = DEFAULT_CHUNK_SIZE
 
         # Renderer Camera
@@ -328,10 +328,21 @@ class GameRenderer:
     def get_hex_cache_count(self):
         return len(self.hex_cache)
 
+    def get_color_scheme(self):
+        return self.color_scheme
+
+    def get_map_center(self, hexmap : HexMap.HexMap):
+        map_size = (int(hexmap.dimensions[0] // 2 * (self.hex_surface_basic_size[0] * 3 // 2 * self.cached_zoom)
+                    + self.hex_surface_basic_size[0] * self.cached_zoom // 4),
+                    int(hexmap.dimensions[1] * self.hex_surface_basic_size[1] * self.cached_zoom
+                        + self.hex_surface_basic_size[1] * self.cached_zoom // 2))
+
+        return (map_size[0] // 2, map_size[1] // 2)
+
     def draw_entire_map_separate(self, hex_map : HexMap.HexMap):
         tile_size = (64, 64)
 
-        map_size = (hex_map.dimensions[0] // 2 * (tile_size[0] * 3 // 2) + tile_size[0] // 4,
+        map_size = (hex_map.dimensions[0] // 2 * (tile_size[0] * 3 // 2) + tile_size[0],
                     hex_map.dimensions[1] * tile_size[1] + tile_size[1] // 2)
 
         map_surf = pygame.Surface(map_size, pygame.SRCALPHA)
@@ -602,8 +613,10 @@ class GameRenderer:
             self.draw_tile(tile, color, chunk_surface)
 
     def update_list_chunks(self, tiles : list[Hex.Hex]):
-        for tile in tiles:
-            self.update_chunk(tile)
+        if tiles:
+            for tile in tiles:
+                if tile:
+                    self.update_chunk(tile)
 
     # Draw all chunks to screen
     def draw_chunks(self):

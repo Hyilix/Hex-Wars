@@ -75,6 +75,15 @@ class HexMap:
             neighbors.append(self.get_hex_neighbor(tile, index))
         return neighbors
 
+    # Returns an array containing the neighboring tiles of a clump
+    def get_neighbors_around_clump(self, clump : list[Hex], tiles):
+        for current in clump:
+            neighbors = self.get_hex_all_neighbors(current)
+
+            for neighbor in neighbors:
+                if neighbor and neighbor not in tiles and neighbor not in clump:
+                    tiles.append(neighbor)
+
     def __bfs_up_to_level(self, start, max_level, only_identical = False):
         visited = [start]
         queue = deque([(start, 0)])
