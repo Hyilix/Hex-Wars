@@ -77,7 +77,10 @@ class Gameplay:
         if not self.__selected_tile:
             if tile.doodad:
                 self.__selected_tile = tile
-                self.__renderer.set_highlighted_hexes(self.__hex_map.get_movable_tiles(tile, tile.doodad.get_move_range()))
+
+                movable_tiles = self.__hex_map.get_movable_tiles(tile, tile.doodad.get_move_range())
+                movable_tiles.append(tile)
+                self.__renderer.set_highlighted_hexes(movable_tiles)
             return
 
         print("Handle gameplay mouse")

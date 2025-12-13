@@ -204,7 +204,7 @@ class GameRenderer:
         self.background_color = colors.gray_very_dark
 
         self.highlighted_tiles : list[Hex.Hex] = None
-        self.__fog_color = colors.gray_dark
+        self.__fog_color = colors.fog_color
 
         self.hexmap = None
         self.visible_chunks = [[]]
@@ -508,9 +508,12 @@ class GameRenderer:
 
     def fill_screen_with_fog(self):
         if self.highlighted_tiles:
-            self.screen.fill(self.__fog_color, special_flags=BLEND_RGBA_MULT)
+            transparent = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+            transparent.fill(self.__fog_color)
             for tile in self.highlighted_tiles:
-                self.update_chunk(tile, self.screen)
+                self.update_chunk(tile, transparent)
+
+            self.screen.blit(transparent, (0, 0))
 
     # Generate all the chunks from the map
     def load_chunks(self, hexmap : HexMap.HexMap):

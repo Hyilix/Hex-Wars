@@ -126,13 +126,16 @@ class HexMap:
 
         # Remove the doodads from the same ownership
         for tile in visited:
+            print(f"Handling the tile with pos {tile.get_position()}")
             if tile == start:
                 visited.remove(tile)
+                print(f"Same tile of position {tile.get_position()}")
                 continue
 
             # Remove the doodads from the same territory
             if tile.owner == start.owner:
                 if tile.doodad:
+                    print(f"Removed tile of position {tile.get_position()}")
                     visited.remove(tile)
             # Remove the doodads with a defence higher than the attack
             else:
@@ -140,6 +143,7 @@ class HexMap:
                 attack = start.doodad.get_attack()
                 defence = self.check_tile_defence(tile)
 
+                print(f"defence : {defence} vs attack : {attack} on tile at pos : {tile.get_position()}")
                 if defence >= attack:
                     visited.remove(tile)
 
@@ -158,7 +162,7 @@ class HexMap:
 
         for neighbor in tile_neighbors:
             if neighbor.doodad:
-                print(f"doodad : {neighbor.get_position()}")
+                # print(f"doodad : {neighbor.get_position()}")
                 new_defence = neighbor.doodad.get_defence()
                 if new_defence > max_defence:
                     max_defence = new_defence

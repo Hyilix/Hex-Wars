@@ -30,6 +30,8 @@ modBlue = (0,0,5)
 # Check what color to look out for when replacing the hex color
 shader_color = (1, 1, 1)
 
+fog_color = (20, 20, 20, 170)
+
 # Editor colors
 tab_color = (32, 32, 32, 150)
 
