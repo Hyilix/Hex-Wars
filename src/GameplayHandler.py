@@ -65,6 +65,9 @@ class Gameplay:
     def get_hex_map(self):
         return self.__hex_map
 
+    def get_renderer(self):
+        return self.__renderer
+
     # Handle the mouse input
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
         # Select the tile
@@ -74,29 +77,34 @@ class Gameplay:
         if not self.__selected_tile:
             if tile.doodad:
                 self.__selected_tile = tile
+                self.__renderer.set_highlighted_hexes(self.__hex_map.get_movable_tiles(tile, tile.doodad.get_move_range()))
             return
 
         print("Handle gameplay mouse")
 
+        # Handle the movement of the unit
         action_list = ActionHandler.ActionList([])
-        self.__hex_map.move_unit(self.__selected_tile, tile, action_list)
-        self.action_handler.add_action_list(action_list)
+        moved_unit = self.__hex_map.move_unit(self.__selected_tile, tile, action_list)
 
-        state_action_list = ActionHandler.ActionList([])
+        if moved_unit:
+            self.action_handler.add_action_list(action_list)
 
-        modified_tiles = []
-        tile_list = [self.__selected_tile, tile]
+            state_action_list = ActionHandler.ActionList([])
 
-        if len(tile_list) > 0:
-            modified_tiles = utils.state_handling(self, tile_list, state_action_list)
+            modified_tiles = []
+            tile_list = [self.__selected_tile, tile]
 
-        self.action_handler.extend_last_list(state_action_list)
+            if len(tile_list) > 0:
+                modified_tiles = utils.state_handling(self, tile_list, state_action_list)
 
-        if modified_tiles:
-            tile_list.extend(modified_tiles)
+            self.action_handler.extend_last_list(state_action_list)
 
-        self.__renderer.update_list_chunks(tile_list)
+            if modified_tiles:
+                tile_list.extend(modified_tiles)
+
+            self.__renderer.update_list_chunks(tile_list)
         self.__selected_tile = None
+        self.__renderer.set_highlighted_hexes()
 
     # Handle the keyboard input
     def handle_keyboard_action(self, screen):
@@ -119,6 +127,8 @@ class Gameplay:
             actions = self.action_handler.undo_last_action()
         else:
             actions = self.action_handler.redo_last_action()
+        self.__renderer.set_highlighted_hexes()
+        self.__selected_tile = None
 
         if actions:
             utils.state_handling(self, actions, None)

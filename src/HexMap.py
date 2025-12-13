@@ -78,6 +78,16 @@ class HexMap:
             neighbors.append(self.get_hex_neighbor(tile, index))
         return neighbors
 
+    def get_hex_all_owner_neighbors(self, tile : Hex):
+        # Include the tile itself
+        neighbors = [tile]
+        for index in range(6):
+            neighbor = self.get_hex_neighbor(tile, index)
+            if neighbor and tile.owner == neighbor.owner:
+                neighbors.append(neighbor)
+
+        return neighbors
+
     # Returns an array containing the neighboring tiles of a clump
     def get_neighbors_around_clump(self, clump : list[Hex], tiles):
         for current in clump:
@@ -111,9 +121,27 @@ class HexMap:
             if (level < max_level or max_level == -1) and tile.owner == start.owner:
                 for neighbour in self.get_hex_all_neighbors(tile):
                     if neighbour and neighbour not in visited:
-                        if not neighbour.doodad or neighbour.owner != start.owner:
-                            visited.append(neighbour)
-                            queue.append((neighbour, level + 1))
+                        visited.append(neighbour)
+                        queue.append((neighbour, level + 1))
+
+        # Remove the doodads from the same ownership
+        for tile in visited:
+            if tile == start:
+                visited.remove(tile)
+                continue
+
+            # Remove the doodads from the same territory
+            if tile.owner == start.owner:
+                if tile.doodad:
+                    visited.remove(tile)
+            # Remove the doodads with a defence higher than the attack
+            else:
+                # 'start' tile should always have a unit
+                attack = start.doodad.get_attack()
+                defence = self.check_tile_defence(tile)
+
+                if defence >= attack:
+                    visited.remove(tile)
 
         return visited
 
@@ -123,31 +151,49 @@ class HexMap:
     def get_neighbors_at_level(self, tile : Hex, levels : int):
         return self.__bfs_up_to_level(tile, levels - 1)
 
+    def check_tile_defence(self, tile : Hex):
+        tile_neighbors = self.get_hex_all_owner_neighbors(tile)
+
+        max_defence = 0
+
+        for neighbor in tile_neighbors:
+            if neighbor.doodad:
+                print(f"doodad : {neighbor.get_position()}")
+                new_defence = neighbor.doodad.get_defence()
+                if new_defence > max_defence:
+                    max_defence = new_defence
+
+        return max_defence
+
     # Move the unit from one hex to another
     def move_unit(self, start_hex : Hex, end_hex : Hex, action_list : ActionHandler.ActionList):
         if not start_hex or not end_hex:
-            return
+            return False
+
+        # You can't move to the same place, duh
+        if start_hex == end_hex:
+            return False
 
         print(f"start_hex -> {start_hex.get_position()}, end_hex -> {end_hex.get_position()}")
 
         # If there is no doodad, there is nothing to move
         if start_hex.doodad == None:
-            return
+            return False
 
         valid_tiles = self.get_movable_tiles(start_hex, start_hex.doodad.get_move_range())
         print(f"move range : {start_hex.doodad.get_move_range()}")
-        # for tile in valid_tiles:
-        #     print(f"valid tile -> {tile.get_position()}")
 
         if end_hex not in valid_tiles or not start_hex.doodad.get_can_action():
-            return
-        start_hex.doodad.set_can_action(False)
+            return False
+        # start_hex.doodad.set_can_action(False)
 
         print("Move the unit")
 
         action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(end_hex.doodad), copy.deepcopy(start_hex.doodad), 'doodad', end_hex))
         action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, end_hex.owner, start_hex.owner, 'owner', end_hex))
         action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(start_hex.doodad), None, 'doodad', start_hex))
+
+        return True
 
 # Index of each neighbour
 #            _____

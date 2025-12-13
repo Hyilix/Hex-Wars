@@ -24,6 +24,12 @@ class Doodad:
     def get_can_action(self):
         return self._can_action
 
+    def get_defence(self):
+        return 0;
+
+    def get_attack(self):
+        return 0;
+
 # NOTE:
 # Owner convention:
 #  -1 ->  tile not existing
@@ -32,15 +38,18 @@ class Doodad:
 # The number of max players is not yet defined, 8 is taken as just an example
 
 class Controllable(Doodad):
-    def __init__(self, owner : int, income : int):
+    def __init__(self, owner : int, income : int, defence : int):
         super().__init__(income)
         self.owner = owner
+        self.defence = defence
+
+    def get_defence(self):
+        return self.defence
 
 class Structure(Controllable):
     def __init__(self, owner : int, income : int, sight_range : int, defence : int):
-        super().__init__(owner, income)
+        super().__init__(owner, income, defence)
         self.sight_range = sight_range
-        self.defence = defence
         self.type = 0
 
     def get_type(self):
@@ -48,10 +57,9 @@ class Structure(Controllable):
 
 class Unit(Controllable):
     def __init__(self, owner : int, income : int, sight_range : int, move_range : int, defence : int, attack : int):
-        super().__init__(owner, income)
+        super().__init__(owner, income, defence)
         self.sight_range = sight_range
         self.move_range = move_range
-        self.defence = defence
         self.attack = attack
         self.type = 0
 
@@ -62,6 +70,9 @@ class Unit(Controllable):
 
     def get_type(self):
         return "unit"
+
+    def get_attack(self):
+        return self.attack
 
 """ Default Structures """
 class TowerTier1(Structure):

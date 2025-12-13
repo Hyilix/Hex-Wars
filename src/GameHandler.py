@@ -234,6 +234,9 @@ class GameHandler:
     def draw_menu_title(self):
         self.__menu.draw_title()
 
+    def draw_gameplay_fog(self):
+        self.__renderer.fill_screen_with_fog()
+
     def draw_every_frame(self):
         if self.__renderer:
             self.draw_renderer_chunks()
@@ -244,6 +247,9 @@ class GameHandler:
         if self.__menu:
             self.draw_menu_title()
             self.draw_menu_buttons()
+
+        if self.__gameplay:
+            self.draw_gameplay_fog()
 
     def set_new_map_editor(self):
         if self.__is_editor_set_up():
