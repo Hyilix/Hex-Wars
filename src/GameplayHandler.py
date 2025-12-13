@@ -15,6 +15,7 @@ import ActionHandler
 import KeyboardState
 import ButtonHandler
 
+# The gameplay class that handler the gameplay aspects of the game
 class Gameplay:
     def __init__(self, renderer : GameRenderer.GameRenderer, hex_map : HexMap.HexMap, screen_size : tuple[int, int]):
         self.__renderer = renderer
