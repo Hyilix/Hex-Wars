@@ -493,10 +493,10 @@ class GameRenderer:
 
             x_pos *= self.hex_surface_basic_size[0] * self.cached_zoom
             y_pos *= self.hex_surface_basic_size[1] * self.cached_zoom
-            x_pos -= self.hex_surface_basic_size[0] * x_offset // 4
+            x_pos -= self.hex_surface_basic_size[0] * x_offset // 4 * self.cached_zoom
 
             if tile.position[0] % 2 == 1:
-                y_pos += self.hex_surface_basic_size[1] // 2
+                y_pos += self.hex_surface_basic_size[1] // 2 * self.cached_zoom
 
             # Apply camera offset
             x_pos -= self.camera.get_corner_position()[0]
