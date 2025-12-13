@@ -4,6 +4,7 @@ import random
 class Doodad:
     def __init__(self, income : int):
         self.income = income
+        self._can_action = False
 
     def get_type(self):
         return "doodad"
@@ -16,6 +17,12 @@ class Doodad:
 
     def get_move_range(self):
         return 0
+
+    def set_can_action(self, val : bool):
+        self._can_action = val
+
+    def get_can_action(self):
+        return self._can_action
 
 # NOTE:
 # Owner convention:
@@ -47,6 +54,8 @@ class Unit(Controllable):
         self.defence = defence
         self.attack = attack
         self.type = 0
+
+        self.set_can_action(True)
 
     def get_move_range(self):
         return self.move_range

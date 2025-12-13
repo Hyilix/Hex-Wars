@@ -54,3 +54,7 @@ class Player:
                 return state
         return None
 
+    def ready_all_units(self):
+        for state in self.states:
+            state.ready_all_units()
+

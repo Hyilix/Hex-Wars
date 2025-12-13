@@ -139,9 +139,9 @@ class HexMap:
         # for tile in valid_tiles:
         #     print(f"valid tile -> {tile.get_position()}")
 
-        if end_hex not in valid_tiles:
+        if end_hex not in valid_tiles or not start_hex.doodad.get_can_action():
             return
-        # start_hex.doodad.set_can_action(False)
+        start_hex.doodad.set_can_action(False)
 
         print("Move the unit")
 

@@ -169,7 +169,7 @@ class Brush:
             if self.__owner >= 0:
                 if tile.doodad == None or self.__doodad == None or tile.doodad.get_name() != self.__doodad.get_name():
                     if tile.doodad != self.__doodad and (tile.doodad == None or tile.doodad.get_name() != "Base"):
-                        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, tile.doodad, self.__doodad, 'doodad', tile))
+                        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(tile.doodad), copy.deepcopy(self.__doodad), 'doodad', tile))
                         if tile not in tile_list:
                             tile_list.append(tile)
 

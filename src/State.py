@@ -2,6 +2,7 @@ from collections import deque
 
 from Hex import Hex
 from HexMap import HexMap
+import Doodads
 
 class State:
     def __init__(self, owner : int, central_hex : Hex):
@@ -133,6 +134,11 @@ class State:
     def is_state_valid(self):
         state_valid = len(self.state_hexes) > 1
         return state_valid
+
+    def ready_all_units(self):
+        for tile in self.get_state_hexes():
+            if isinstance(tile.doodad, Doodads.Unit):
+                tile.doodad.set_can_action(True)
 
     def split_state(self, hexmap : HexMap, states):
         former_state = self.state_hexes[:]
