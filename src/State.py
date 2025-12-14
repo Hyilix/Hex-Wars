@@ -151,15 +151,21 @@ class State:
         return state_valid
 
     def ready_all_units(self):
+        tiles = []
         for tile in self.get_state_hexes():
             if isinstance(tile.doodad, Doodads.Unit):
                 tile.doodad.set_can_action(True)
-                print(f"Tile found to set action -> {tile.get_position()}")
+                tiles.append(tile)
+                # print(f"Tile found to set action -> {tile.get_position()}")
+        return tiles
 
     def unready_all_units(self):
+        tiles = []
         for tile in self.get_state_hexes():
             if isinstance(tile.doodad, Doodads.Unit):
                 tile.doodad.set_can_action(False)
+                tiles.append(tile)
+        return tiles
 
     def split_state(self, hexmap : HexMap, states):
         former_state = self.state_hexes[:]

@@ -188,6 +188,16 @@ def switch_to_gameplay(game_handler, button):
     game_handler.set_map_to_load(button.get_str_data())
     game_handler.switch_tab(GameHandler.CurrentTab.GAMEPLAY)
 
+# Gameplay buttons
+def select_gameplay_undo(gameplay, button):
+    gameplay.handle_action_handler(True)
+
+def select_gameplay_redo(gameplay, button):
+    gameplay.handle_action_handler(False)
+
+def select_gameplay_next_turn(gameplay, button):
+    gameplay.end_current_turn()
+
 # Loader functions
 def load_main_buttons():
     buttons : list[button.TextureButton] = []
@@ -464,6 +474,26 @@ def load_buy_buttons():
     farm.load_texture(DEFAULT_UI_PATH + "world/Farm.png")
     farm.set_doodad_state()
     buttons.append(farm)
+
+    return buttons
+
+def load_gameplay_buttons(screen_size):
+    buttons : list[button.TextureButton] = []
+
+    pos_x = screen_size[0] * 8 // 10
+    pos_y = screen_size[1] // 20
+
+    undo = button.TextureButton((pos_x, pos_y), (64, 64), select_gameplay_undo)
+    undo.load_texture("../assets/ui/game/Undo.png")
+    buttons.append(undo)
+
+    redo = button.TextureButton((pos_x + 70, pos_y), (64, 64), select_gameplay_redo)
+    redo.load_texture("../assets/ui/game/Redo.png")
+    buttons.append(redo)
+
+    next_turn = button.TextureButton((pos_x + 140, pos_y), (64, 64), select_gameplay_next_turn)
+    next_turn.load_texture("../assets/ui/game/Next_Turn.png")
+    buttons.append(next_turn)
 
     return buttons
 

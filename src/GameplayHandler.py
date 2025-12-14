@@ -19,6 +19,8 @@ import ActionHandler
 import KeyboardState
 import ButtonHandler
 
+import Collisions_2d
+
 from Tabs import Tab
 from Tabs import TabMenu
 
@@ -61,10 +63,23 @@ class Gameplay:
         self.__coin_surface = pygame.image.load("../assets/ui/game/Coin.png")
 
         self.font = pygame.font.Font(DEFAULT_FONT, 30)
+        self.money_font = pygame.font.Font(DEFAULT_FONT, 20)
+
+        self.buttons = ButtonHandler.load_gameplay_buttons(screen_size)
 
     def render_tabs(self, screen):
         if self.__tabs_visible:
             self.buytab.draw_tab(screen)
+
+    def render_buttons(self, screen):
+        for button in self.buttons:
+            button.draw(screen)
+
+    def buttons_click_action(self, mouse_pos : tuple[int, int]):
+        for button in self.buttons:
+            if button.check_mouse_collision(mouse_pos):
+                print("Clicked on a button")
+                button.call_function(self, button)
 
     # Load a game and save the game configuration
     def load_game(self, game_name):
@@ -121,8 +136,8 @@ class Gameplay:
         if not player:
             return
 
-        player.print_no_states()
-        player.ready_all_units()
+        tiles = player.ready_all_units()
+        self.__renderer.update_list_chunks(tiles)
 
     # End the current turn and go onto the next player
     def end_current_turn(self):
@@ -131,17 +146,18 @@ class Gameplay:
         if not player:
             return
 
-        player.unready_all_units()
+        tiles = player.unready_all_units()
 
         # Prepare next player
         self.__current_player += 1
         if (not self.get_current_player()):
             self.__current_player = 0
 
+        self.__renderer.update_list_chunks(tiles)
         self.start_current_turn()
 
-    def render_text(self, screen, line, pos, color):
-        text = self.font.render(line, True, color)
+    def render_text(self, screen, line, pos, color, font):
+        text = font.render(line, True, color)
         text_rect = text.get_rect()
 
         text_rect.x = pos[0]
@@ -152,8 +168,8 @@ class Gameplay:
 
     def draw_current_player_text(self, screen):
         screen_size = screen.get_size()
-        prev_rect = self.render_text(screen, "Current Player: ", (screen_size[0] // 20, screen_size[1] // 20), colors.white)
-        self.render_text(screen, str(self.__current_player), (screen_size[0] // 20 + prev_rect.width, screen_size[1] // 20), self.__color_scheme[self.__current_player + 1])
+        prev_rect = self.render_text(screen, "Current Player: ", (screen_size[0] // 20, screen_size[1] // 20), colors.white, self.font)
+        self.render_text(screen, str(self.__current_player), (screen_size[0] // 20 + prev_rect.width, screen_size[1] // 20), self.__color_scheme[self.__current_player + 1], self.font)
 
     def render_coin(self, screen):
         if not self.__tabs_visible:
@@ -182,7 +198,7 @@ class Gameplay:
             text = str(state.get_money()) + "  (" + plus + str(state.get_income()) + ")"
             # print(f"text = {text}")
 
-            self.render_text(screen, text, (screen_size[0] // 12 + 48, button_y + 8), colors.white)
+            self.render_text(screen, text, (screen_size[0] // 12 + 48, button_y + 8), colors.white, self.money_font)
 
     # Handle the mouse input
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
@@ -191,6 +207,7 @@ class Gameplay:
             return
 
         if not tile:
+            self.buttons_click_action(mouse_pos)
             return
         player = self.get_current_player()
 
@@ -205,11 +222,12 @@ class Gameplay:
                     movable_tiles.append(tile)
                     self.__renderer.set_highlighted_hexes(movable_tiles)
                 elif not self.__building_mode:
-                    self.__building_mode = True
-                    self.__tabs_visible = not self.__tabs_visible
                     state = player.state_includes_tile(tile)
-                    self.__renderer.set_highlighted_hexes(state.get_state_hexes())
-                    self.__selected_state = state
+                    if state:
+                        self.__building_mode = True
+                        self.__tabs_visible = not self.__tabs_visible
+                        self.__renderer.set_highlighted_hexes(state.get_state_hexes())
+                        self.__selected_state = state
                 else:
                     self.__building_mode = False
                     self.__renderer.set_highlighted_hexes()
@@ -219,6 +237,7 @@ class Gameplay:
                 self.__building_mode = False
                 self.__renderer.set_highlighted_hexes()
                 self.__tabs_visible = False
+            self.buttons_click_action(mouse_pos)
             return
 
         print("Handle gameplay mouse")
@@ -247,6 +266,8 @@ class Gameplay:
             player.update_all_income()
         self.__selected_tile = None
         self.__renderer.set_highlighted_hexes()
+
+        self.buttons_click_action(mouse_pos)
 
     # Handle the keyboard input
     def handle_keyboard_action(self, screen):

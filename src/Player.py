@@ -55,12 +55,16 @@ class Player:
         return None
 
     def ready_all_units(self):
+        tiles = []
         for state in self.states:
-            state.ready_all_units()
+            tiles.extend(state.ready_all_units())
+        return tiles
 
     def unready_all_units(self):
+        tiles = []
         for state in self.states:
-            state.ready_all_units()
+            tiles.extend(state.unready_all_units())
+        return tiles
 
     def update_all_income(self):
         for state in self.states:
