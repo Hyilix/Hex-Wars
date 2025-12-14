@@ -3,6 +3,10 @@ Hex-Wars
 
 https://github.com/Hyilix/Hex-Wars
 
+Youtube videos:
+* Editor preview -> https://youtu.be/JGAWGCcuJXg
+* Gameplay preview -> https://youtu.be/sJBjhezD5WM 
+
 Team:
 * Ursescu Sebastian https://github.com/Hyilix - 325 CA -> Project "Leader" (the one who sent the assignments to moodle)
 * Stoian Andrei-Alexandru https://github.com/Frasdemsky - 331 CD 
