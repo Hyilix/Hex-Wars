@@ -6,6 +6,7 @@ class ActionType(Enum):
     MONEY = 200
     PLAYER = 300
     STATE = 301
+    UNIT = 302
 
 # Action class to hold an independent action
 class Action:
@@ -29,17 +30,24 @@ class Action:
 
     def apply_action(self):
         try:
-            if self.__target == "is_central_hex":
-                print(f"Apply hex central, {self.__new_value}")
-            setattr(self.__owner, self.__target, self.__new_value)
+            if self.__target == "_can_action":
+                self.__owner.set_can_action(self.__new_value)
+                print(f"after action: {self.__owner.get_can_action()}")
+            else:
+                if self.__target == "is_central_hex":
+                    print(f"Apply hex central, {self.__new_value}")
+                setattr(self.__owner, self.__target, self.__new_value)
         except:
             self.__owner[self.__target] = self.__new_value
 
     def undo_action(self):
         try:
-            if self.__target == "is_central_hex":
-                print(f"Undo hex central, {self.__last_value}")
-            setattr(self.__owner, self.__target, self.__last_value)
+            if self.__target == "_can_action":
+                self.__owner.set_can_action(self.__last_value)
+            else:
+                if self.__target == "is_central_hex":
+                    print(f"Undo hex central, {self.__last_value}")
+                setattr(self.__owner, self.__target, self.__last_value)
         except:
             self.__owner[self.__target] = self.__last_value
 

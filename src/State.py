@@ -2,6 +2,7 @@ from collections import deque
 
 from Hex import Hex
 from HexMap import HexMap
+import Doodads
 
 class State:
     def __init__(self, owner : int, central_hex : Hex):
@@ -20,6 +21,15 @@ class State:
         # If this is True, all the units of the state will be deleted
         self.is_bankrupt = False
 
+    def get_income(self):
+        return self.income
+
+    def get_money(self):
+        return self.money
+
+    def spend_money(self, val):
+        self.money -= val
+
     def get_owner(self):
         return self.owner
 
@@ -32,6 +42,14 @@ class State:
     def get_state_hexes(self):
         return self.state_hexes
 
+    def get_farm_count(self):
+        count = 0
+        for tile in self.state_hexes:
+            if isinstance(tile.doodad, Doodads.Farm):
+                count += 1
+
+        return count
+
     def set_central_hex(self, central_hex : Hex):
         if central_hex in self.state_hexes:
             self.central_hex.set_central_hex_status(False)
@@ -39,6 +57,14 @@ class State:
             self.central_hex.set_central_hex_status(True)
 
     def find_new_central_hex(self):
+        # Find the first empty tile
+        for i in range(len(self.state_hexes)):
+            if not self.state_hexes[i].doodad:
+                self.central_hex = self.state_hexes[i]
+                self.state_hexes[i].set_central_hex_status(True)
+                return self.central_hex
+
+        # If all tiles are occupied, force the first one to be central
         self.central_hex = self.state_hexes[0]
         self.state_hexes[0].set_central_hex_status(True)
         return self.central_hex
@@ -49,6 +75,7 @@ class State:
 
     # Update the income of the state
     def update_income(self):
+        self.income = 0
         for tile in self.state_hexes:
             self.income += tile.income
             if (tile.doodad):
@@ -133,6 +160,23 @@ class State:
     def is_state_valid(self):
         state_valid = len(self.state_hexes) > 1
         return state_valid
+
+    def ready_all_units(self):
+        tiles = []
+        for tile in self.get_state_hexes():
+            if isinstance(tile.doodad, Doodads.Unit):
+                tile.doodad.set_can_action(True)
+                tiles.append(tile)
+                # print(f"Tile found to set action -> {tile.get_position()}")
+        return tiles
+
+    def unready_all_units(self):
+        tiles = []
+        for tile in self.get_state_hexes():
+            if isinstance(tile.doodad, Doodads.Unit):
+                tile.doodad.set_can_action(False)
+                tiles.append(tile)
+        return tiles
 
     def split_state(self, hexmap : HexMap, states):
         former_state = self.state_hexes[:]

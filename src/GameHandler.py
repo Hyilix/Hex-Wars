@@ -60,6 +60,12 @@ class GameHandler:
     def __is_menu_set_up(self):
         return self.__menu
 
+    def __is_gameplay_set_up(self):
+        return self.__screen and self.__gameplay and self.__hex_map and self.__camera
+
+    def __is_renderer_set_up(self):
+        return self.__renderer
+
     def set_map_to_load(self, map_to_load):
         self.__map_to_load = map_to_load
 
@@ -120,8 +126,9 @@ class GameHandler:
         self.__menu = Menu.MapPicker(self.__screen)
 
     def create_default_gameplay(self):
-        self.__gameplay = GameplayHandler.Gameplay(self.__renderer, self.__hex_map, self.__screen.get_size())
+        self.__gameplay = GameplayHandler.Gameplay(self.__renderer, self.__hex_map, self.__screen.get_size(), self.__color_scheme)
         self.__gameplay.load_game(self.__map_to_load)
+        self.__gameplay.start_current_turn()
 
     def picker_load_maps(self):
         self.__menu.load_maps(self.__color_scheme)
@@ -193,11 +200,28 @@ class GameHandler:
         if self.__is_editor_set_up():
             self.__editor.handle_keyboard_action(self.__screen)
 
+    def gameplay_handle_keyboard(self):
+        if self.__is_gameplay_set_up():
+            self.__gameplay.handle_keyboard_action(self.__screen)
+
     def menu_handle_mouse_action(self, mouse_pos, click_once = False):
         if not self.__is_menu_set_up() or click_once == False:
             return
 
         self.__menu.buttons_click_action(mouse_pos, GameHandler())
+
+    def gameplay_handle_mouse_action(self, mouse_pos, click_once = False):
+        if not self.__is_gameplay_set_up():
+            return
+
+        tile_pos = self.__camera.get_tile_at_position(mouse_pos)
+        # Check if tile is within bounds
+        if (tile_pos[0] >= 0 and tile_pos[0] < self.__hex_map.dimensions[0] and
+            tile_pos[1] >= 0 and tile_pos[1] < self.__hex_map.dimensions[1]):
+            current_tile = self.__hex_map.get_tile_at_position(tile_pos)
+            self.__gameplay.handle_mouse_action(mouse_pos, current_tile, click_once)
+        elif click_once == True:
+            self.__gameplay.handle_mouse_action(mouse_pos, None, click_once)
 
     def draw_renderer_chunks(self):
         self.__renderer.draw_chunks()
@@ -205,14 +229,23 @@ class GameHandler:
     def draw_editor_tabs(self):
         self.__editor.render_tabs(self.__screen)
 
+    def draw_gameplay_tabs(self):
+        self.__gameplay.render_tabs(self.__screen)
+
     def draw_menu_buttons(self):
         self.__menu.draw_buttons()
 
     def draw_menu_title(self):
         self.__menu.draw_title()
 
-    # def draw_map_previews(self):
-    #     self.__menu.spread_maps()
+    def draw_gameplay_fog(self):
+        self.__renderer.fill_screen_with_fog()
+
+    def draw_gameplay_ui(self):
+        self.__gameplay.render_coin(self.__screen)
+        self.__gameplay.draw_current_player_text(self.__screen)
+        self.__gameplay.render_buttons(self.__screen)
+        self.__gameplay.draw_winner_player_text(self.__screen)
 
     def draw_every_frame(self):
         if self.__renderer:
@@ -224,11 +257,23 @@ class GameHandler:
         if self.__menu:
             self.draw_menu_title()
             self.draw_menu_buttons()
-            # self.draw_map_previews()
+
+        if self.__gameplay:
+            self.draw_gameplay_fog()
+            self.draw_gameplay_tabs()
+            self.draw_gameplay_ui()
 
     def set_new_map_editor(self):
         if self.__is_editor_set_up():
             self.__hex_map = self.__editor.get_hex_map()
+
+    def set_new_map_gameplay(self):
+        if self.__is_gameplay_set_up():
+            self.__hex_map = self.__gameplay.get_hex_map()
+
+    def reload_renderer(self):
+        if self.__is_renderer_set_up():
+            self.__renderer.reload_renderer(self.__hex_map)
 
     def center_camera(self):
         if self.__is_camera_set_up():

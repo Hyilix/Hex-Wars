@@ -1,4 +1,6 @@
+from sys import flags
 import pygame
+from pygame.locals import BLEND_RGBA_MULT
 from pygame.transform import threshold
 import math
 
@@ -185,6 +187,8 @@ class GameRenderer:
         self.hex_surface_basic_size = (0, 0)
         self.hex_surface_scale = 1
 
+        self.ready_surface : pygame.Surface = None
+
         self.current_zoom = 1
         self.cached_zoom = self.current_zoom
 
@@ -200,6 +204,9 @@ class GameRenderer:
 
         # Background color
         self.background_color = colors.gray_very_dark
+
+        self.highlighted_tiles : list[Hex.Hex] = None
+        self.__fog_color = colors.fog_color
 
         self.hexmap = None
         self.visible_chunks = [[]]
@@ -224,6 +231,8 @@ class GameRenderer:
         self.hex_surface_basic_size = self.hex_surface.get_size()
         self.hex_surface_scale = scale
 
+        self.ready_surface = pygame.image.load(self.texture_path + "Ready.png")
+
         self.clear_hex_cache()
         # Add a scaled surface to the cache
         scaled_hex = pygame.transform.scale_by(self.hex_surface, scale)
@@ -244,6 +253,12 @@ class GameRenderer:
     def load_background_surface(self, scale : int = 1, img_name : str = "Background.png"):
         self.background_surface = pygame.image.load(self.texture_path + img_name)
         self.background_surface = pygame.transform.scale_by(self.background_surface, scale)
+
+    def set_highlighted_hexes(self, hexes = None):
+        self.highlighted_tiles = hexes
+
+    def get_highlighted_hexes(self):
+        return self.highlighted_tiles
 
     # Set the camera zoom
     def set_zoom(self, new_zoom : float):
@@ -414,7 +429,7 @@ class GameRenderer:
         return map_surf
 
     # Draw one tile to the screen
-    def draw_tile(self, tile : Hex.Hex, new_color : tuple[int, int, int], chunk_surf : pygame.Surface):
+    def draw_tile(self, tile : Hex.Hex, new_color : tuple[int, int, int], chunk_surf : pygame.Surface, surface_to_blit = None):
         # Skip non-existing tiles
         if not tile:
             return
@@ -450,6 +465,12 @@ class GameRenderer:
                     self.load_doodad_surface(doodad.get_name(), doodad.get_type(), self.cached_zoom)
                     temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
 
+                temp_doodad_surface = temp_doodad_surface.copy()
+
+                # Blit the ready sign if it can move
+                if doodad.get_can_action():
+                    temp_doodad_surface.blit(self.ready_surface, (0, 0))
+
                 temp_doodad_surface = pygame.transform.scale_by(temp_doodad_surface, self.cached_zoom)
 
         # Render the hex on the chunk surface
@@ -471,9 +492,38 @@ class GameRenderer:
         if tile.position[0] % 2 == 1:
             tile_y += hex_size[1] // 2
 
-        chunk_surf.blit(temp_hex_surface, (tile_x, tile_y))
-        if tile.owner != -1 and temp_doodad_surface:
-            chunk_surf.blit(temp_doodad_surface, (tile_x, tile_y))
+        if not surface_to_blit:
+            chunk_surf.blit(temp_hex_surface, (tile_x, tile_y))
+            if tile.owner != -1 and temp_doodad_surface:
+                chunk_surf.blit(temp_doodad_surface, (tile_x, tile_y))
+        else:
+            (x_pos, y_pos) = tile.position
+
+            x_offset = x_pos
+
+            x_pos *= self.hex_surface_basic_size[0] * self.cached_zoom
+            y_pos *= self.hex_surface_basic_size[1] * self.cached_zoom
+            x_pos -= self.hex_surface_basic_size[0] * x_offset // 4 * self.cached_zoom
+
+            if tile.position[0] % 2 == 1:
+                y_pos += self.hex_surface_basic_size[1] // 2 * self.cached_zoom
+
+            # Apply camera offset
+            x_pos -= self.camera.get_corner_position()[0]
+            y_pos -= self.camera.get_corner_position()[1]
+
+            surface_to_blit.blit(temp_hex_surface, (x_pos, y_pos))
+            if tile.owner != -1 and temp_doodad_surface:
+                surface_to_blit.blit(temp_doodad_surface, (x_pos, y_pos))
+
+    def fill_screen_with_fog(self):
+        if self.highlighted_tiles:
+            transparent = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
+            transparent.fill(self.__fog_color)
+            for tile in self.highlighted_tiles:
+                self.update_chunk(tile, transparent)
+
+            self.screen.blit(transparent, (0, 0))
 
     # Generate all the chunks from the map
     def load_chunks(self, hexmap : HexMap.HexMap):
@@ -605,12 +655,12 @@ class GameRenderer:
         self.visible_chunks = []
 
     # Update a chunk from a changed tile
-    def update_chunk(self, tile : Hex.Hex):
+    def update_chunk(self, tile : Hex.Hex, surface_to_blit = None):
         (x_tile, y_tile) = tile.position
         chunk_surface = self.chunks[y_tile // self.chunk_size[1]][x_tile // self.chunk_size[0]].chunk_surface
         color = self.color_scheme[tile.owner]
         if chunk_surface:
-            self.draw_tile(tile, color, chunk_surface)
+            self.draw_tile(tile, color, chunk_surface, surface_to_blit)
 
     def update_list_chunks(self, tiles : list[Hex.Hex]):
         if tiles:

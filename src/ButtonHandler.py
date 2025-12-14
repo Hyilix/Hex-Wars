@@ -53,7 +53,7 @@ def switch_to_editor(game_handler, button):
     game_handler.switch_tab(GameHandler.CurrentTab.EDITOR)
 
 def switch_to_lobby(game_handler, button):
-    game_handler.switch_tab(GameHandler.CurrentTab.LOBBY)
+    GameHandler.GameHandler().switch_tab(GameHandler.CurrentTab.LOBBY)
 
 def quit_game(game_handler, button):
     game_handler.stop_game()
@@ -156,6 +156,10 @@ def select_doodad_grave(editor, button):
     select_doodad(editor, button)
     editor.change_doodad(Doodads.Grave())
 
+# Buy functions
+def buy_doodad(gameplay, button):
+    gameplay.buy_doodad(button)
+
 # Auxiliary functions
 def select_doodad(editor, button):
     deselect_doodads(editor.worldtab)
@@ -187,6 +191,16 @@ def select_this(button):
 def switch_to_gameplay(game_handler, button):
     game_handler.set_map_to_load(button.get_str_data())
     game_handler.switch_tab(GameHandler.CurrentTab.GAMEPLAY)
+
+# Gameplay buttons
+def select_gameplay_undo(gameplay, button):
+    gameplay.handle_action_handler(True)
+
+def select_gameplay_redo(gameplay, button):
+    gameplay.handle_action_handler(False)
+
+def select_gameplay_next_turn(gameplay, button):
+    gameplay.end_current_turn()
 
 # Loader functions
 def load_main_buttons():
@@ -424,6 +438,88 @@ def load_world_buttons():
     grave1.load_texture(DEFAULT_UI_PATH + "world/Grave_1.png")
     grave1.set_doodad_state()
     buttons.append(grave1)
+
+    return buttons
+
+def load_buy_buttons():
+    buttons : list[button.TextureButton] = []
+
+    unit1 = button.TextureButton((0, 0), (64, 64), buy_doodad)
+    unit1.load_texture(DEFAULT_UI_PATH + "world/Unit_1.png")
+    unit1.set_doodad_state()
+    unit1.set_str_data("10")
+    unit1.draw_text = True
+    buttons.append(unit1)
+
+    unit2 = button.TextureButton((0, 0), (64, 64), buy_doodad)
+    unit2.load_texture(DEFAULT_UI_PATH + "world/Unit_2.png")
+    unit2.set_doodad_state()
+    unit2.set_str_data("20")
+    unit2.draw_text = True
+    buttons.append(unit2)
+
+    unit3 = button.TextureButton((0, 0), (64, 64), buy_doodad)
+    unit3.load_texture(DEFAULT_UI_PATH + "world/Unit_3.png")
+    unit3.set_doodad_state()
+    unit3.set_str_data("30")
+    unit3.draw_text = True
+    buttons.append(unit3)
+
+    unit4 = button.TextureButton((0, 0), (64, 64), buy_doodad)
+    unit4.load_texture(DEFAULT_UI_PATH + "world/Unit_4.png")
+    unit4.set_doodad_state()
+    unit4.set_str_data("40")
+    unit4.draw_text = True
+    buttons.append(unit4)
+
+    tower1 = button.TextureButton((0, 0), (64, 64), buy_doodad)
+    tower1.load_texture(DEFAULT_UI_PATH + "world/Tower_1.png")
+    tower1.set_doodad_state()
+    tower1.set_str_data("15")
+    tower1.draw_text = True
+    buttons.append(tower1)
+
+    tower2 = button.TextureButton((0, 0), (64, 64), buy_doodad)
+    tower2.load_texture(DEFAULT_UI_PATH + "world/Tower_2.png")
+    tower2.set_doodad_state()
+    tower2.set_str_data("35")
+    tower2.draw_text = True
+    buttons.append(tower2)
+
+    farm = button.TextureButton((0, 0), (64, 64), buy_doodad)
+    farm.load_texture(DEFAULT_UI_PATH + "world/Farm.png")
+    farm.set_doodad_state()
+    farm.set_str_data("12")
+    farm.draw_text = True
+    buttons.append(farm)
+
+    return buttons
+
+def load_gameplay_buttons(screen_size):
+    buttons : list[button.TextureButton] = []
+
+    pos_x = screen_size[0] * 8 // 10
+    pos_y = screen_size[1] // 20
+
+    undo = button.TextureButton((pos_x, pos_y), (64, 64), select_gameplay_undo)
+    undo.load_texture("../assets/ui/game/Undo.png")
+    buttons.append(undo)
+
+    redo = button.TextureButton((pos_x + 70, pos_y), (64, 64), select_gameplay_redo)
+    redo.load_texture("../assets/ui/game/Redo.png")
+    buttons.append(redo)
+
+    next_turn = button.TextureButton((pos_x + 140, pos_y), (64, 64), select_gameplay_next_turn)
+    next_turn.load_texture("../assets/ui/game/Next_Turn.png")
+    buttons.append(next_turn)
+
+    return buttons
+
+def load_end_buttons(screen_size):
+    buttons : list[button.SimpleButton] = []
+
+    lobby = button.SimpleButton((screen_size[0] // 2 - 256, screen_size[1] // 2 - 64), (512, 128), "Back to Lobby", switch_to_lobby)
+    buttons.append(lobby)
 
     return buttons
 
