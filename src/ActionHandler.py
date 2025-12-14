@@ -43,7 +43,7 @@ class Action:
     def undo_action(self):
         try:
             if self.__target == "_can_action":
-                self.__owner.set_can_action(self.__old_value)
+                self.__owner.set_can_action(self.__last_value)
             else:
                 if self.__target == "is_central_hex":
                     print(f"Undo hex central, {self.__last_value}")

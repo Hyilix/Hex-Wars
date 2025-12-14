@@ -199,11 +199,10 @@ class HexMap:
 
         print("Move the unit")
 
-        moved_doodad = start_hex.doodad
-        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.UNIT, moved_doodad._can_action, False, '_can_action', start_hex.doodad))
-        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(end_hex.doodad), copy.deepcopy(start_hex.doodad), 'doodad', end_hex))
+        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.UNIT, start_hex.doodad.get_can_action(), False, '_can_action', start_hex.doodad))
+        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, end_hex.doodad, start_hex.doodad, 'doodad', end_hex))
         action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, end_hex.owner, start_hex.owner, 'owner', end_hex))
-        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, copy.deepcopy(start_hex.doodad), None, 'doodad', start_hex))
+        action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, start_hex.doodad, None, 'doodad', start_hex))
 
         return True
 

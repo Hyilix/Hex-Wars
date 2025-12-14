@@ -98,6 +98,9 @@ class Gameplay:
 
     # Start the current turn
     def start_current_turn(self):
+        # Clear before anything
+        self.action_handler.deep_clear()
+
         player = self.get_current_player()
 
         if not player:
