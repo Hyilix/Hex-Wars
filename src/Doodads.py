@@ -63,7 +63,7 @@ class Unit(Controllable):
         self.attack = attack
         self.type = 0
 
-        self.set_can_action(True)
+        # self.set_can_action(True)
 
     def get_move_range(self):
         return self.move_range

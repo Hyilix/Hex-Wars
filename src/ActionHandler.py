@@ -6,6 +6,7 @@ class ActionType(Enum):
     MONEY = 200
     PLAYER = 300
     STATE = 301
+    UNIT = 302
 
 # Action class to hold an independent action
 class Action:

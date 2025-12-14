@@ -5,16 +5,21 @@ import GameRenderer
 import Hex
 import HexMap
 import Player
+import Doodads
 
 import button
 import utils
 import Events
+import colors
 
 import MapHandling
 
 import ActionHandler
 import KeyboardState
 import ButtonHandler
+
+from Tabs import Tab
+from Tabs import TabMenu
 
 # The gameplay class that handler the gameplay aspects of the game
 class Gameplay:
@@ -39,6 +44,18 @@ class Gameplay:
 
         self.__selected_tile : Hex.Hex = None
 
+        self.__tabs_visible = False
+
+        self.buytab = Tab((0, screen_size[1] * 4 // 5), (screen_size[0], screen_size[1] // 5), colors.tab_color)
+        self.buytab.fill_buttons_list(ButtonHandler.load_buy_buttons())
+        self.buytab.spread_buttons_horizontally()
+
+        self.__building_mode = False
+
+    def render_tabs(self, screen):
+        if self.__tabs_visible:
+            self.buytab.draw_tab(screen)
+
     # Load a game and save the game configuration
     def load_game(self, game_name):
         config = MapHandling.load_map(game_name)
@@ -46,6 +63,11 @@ class Gameplay:
             self.__config = config
 
             self.__hex_map = self.__config.get("Map")
+            for row in self.__hex_map.hexmap:
+                for tile in row:
+                    if tile.doodad:
+                        tile.doodad.set_can_action(False)
+
             self.__renderer.reload_renderer(self.__hex_map)
 
             self.__players = self.__config.get("Players")
@@ -68,19 +90,44 @@ class Gameplay:
     def get_renderer(self):
         return self.__renderer
 
+    def is_of_current_player(self, tile : Hex.Hex):
+        return tile.owner - 1 == self.__current_player
+
+    def get_current_player(self):
+        return self.__players[self.__current_player]
+
     # Handle the mouse input
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
         # Select the tile
         if not click_once:
             return
 
-        if not self.__selected_tile:
-            if tile.doodad:
-                self.__selected_tile = tile
+        if not tile:
+            return
 
-                movable_tiles = self.__hex_map.get_movable_tiles(tile, tile.doodad.get_move_range())
-                movable_tiles.append(tile)
-                self.__renderer.set_highlighted_hexes(movable_tiles)
+        if not self.__selected_tile:
+            if self.is_of_current_player(tile):
+                if isinstance(tile.doodad, Doodads.Unit):
+                    self.__tabs_visible = False
+                    self.__selected_tile = tile
+
+                    movable_tiles = self.__hex_map.get_movable_tiles(tile, tile.doodad.get_move_range())
+                    movable_tiles.append(tile)
+                    self.__renderer.set_highlighted_hexes(movable_tiles)
+                elif not self.__building_mode:
+                    self.__building_mode = True
+                    self.__tabs_visible = not self.__tabs_visible
+                    player = self.get_current_player()
+                    state = player.state_includes_tile(tile)
+                    self.__renderer.set_highlighted_hexes(state.get_state_hexes())
+                else:
+                    self.__building_mode = False
+                    self.__renderer.set_highlighted_hexes()
+                    self.__tabs_visible = False
+            else:
+                self.__building_mode = False
+                self.__renderer.set_highlighted_hexes()
+                self.__tabs_visible = False
             return
 
         print("Handle gameplay mouse")

@@ -187,6 +187,8 @@ class GameRenderer:
         self.hex_surface_basic_size = (0, 0)
         self.hex_surface_scale = 1
 
+        self.ready_surface : pygame.Surface = None
+
         self.current_zoom = 1
         self.cached_zoom = self.current_zoom
 
@@ -228,6 +230,8 @@ class GameRenderer:
         self.hex_surface = pygame.image.load(self.texture_path + img_name)
         self.hex_surface_basic_size = self.hex_surface.get_size()
         self.hex_surface_scale = scale
+
+        self.ready_surface = pygame.image.load(self.texture_path + "Ready.png")
 
         self.clear_hex_cache()
         # Add a scaled surface to the cache
@@ -460,6 +464,10 @@ class GameRenderer:
                 if not temp_doodad_surface and doodad.get_name():
                     self.load_doodad_surface(doodad.get_name(), doodad.get_type(), self.cached_zoom)
                     temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
+
+                # Blit the ready sign if it can move
+                if doodad.get_can_action():
+                    temp_doodad_surface.blit(self.ready_surface, (0, 0))
 
                 temp_doodad_surface = pygame.transform.scale_by(temp_doodad_surface, self.cached_zoom)
 

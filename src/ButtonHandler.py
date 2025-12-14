@@ -427,3 +427,43 @@ def load_world_buttons():
 
     return buttons
 
+def load_buy_buttons():
+    buttons : list[button.TextureButton] = []
+
+    unit1 = button.TextureButton((0, 0), (64, 64), select_doodad_unit1)
+    unit1.load_texture(DEFAULT_UI_PATH + "world/Unit_1.png")
+    unit1.set_doodad_state()
+    buttons.append(unit1)
+
+    unit2 = button.TextureButton((0, 0), (64, 64), select_doodad_unit2)
+    unit2.load_texture(DEFAULT_UI_PATH + "world/Unit_2.png")
+    unit2.set_doodad_state()
+    buttons.append(unit2)
+
+    unit3 = button.TextureButton((0, 0), (64, 64), select_doodad_unit3)
+    unit3.load_texture(DEFAULT_UI_PATH + "world/Unit_3.png")
+    unit3.set_doodad_state()
+    buttons.append(unit3)
+
+    unit4 = button.TextureButton((0, 0), (64, 64), select_doodad_unit4)
+    unit4.load_texture(DEFAULT_UI_PATH + "world/Unit_4.png")
+    unit4.set_doodad_state()
+    buttons.append(unit4)
+
+    tower1 = button.TextureButton((0, 0), (64, 64), select_doodad_tower1)
+    tower1.load_texture(DEFAULT_UI_PATH + "world/Tower_1.png")
+    tower1.set_doodad_state()
+    buttons.append(tower1)
+
+    tower2 = button.TextureButton((0, 0), (64, 64), select_doodad_tower2)
+    tower2.load_texture(DEFAULT_UI_PATH + "world/Tower_2.png")
+    tower2.set_doodad_state()
+    buttons.append(tower2)
+
+    farm = button.TextureButton((0, 0), (64, 64), select_doodad_farm)
+    farm.load_texture(DEFAULT_UI_PATH + "world/Farm.png")
+    farm.set_doodad_state()
+    buttons.append(farm)
+
+    return buttons
+

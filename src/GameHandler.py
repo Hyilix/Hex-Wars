@@ -228,6 +228,9 @@ class GameHandler:
     def draw_editor_tabs(self):
         self.__editor.render_tabs(self.__screen)
 
+    def draw_gameplay_tabs(self):
+        self.__gameplay.render_tabs(self.__screen)
+
     def draw_menu_buttons(self):
         self.__menu.draw_buttons()
 
@@ -250,6 +253,7 @@ class GameHandler:
 
         if self.__gameplay:
             self.draw_gameplay_fog()
+            self.draw_gameplay_tabs()
 
     def set_new_map_editor(self):
         if self.__is_editor_set_up():

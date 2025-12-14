@@ -40,6 +40,14 @@ class State:
             self.central_hex.set_central_hex_status(True)
 
     def find_new_central_hex(self):
+        # Find the first empty tile
+        for i in range(len(self.state_hexes)):
+            if not self.state_hexes[i].doodad:
+                self.central_hex = self.state_hexes[i]
+                self.state_hexes[i].set_central_hex_status(True)
+                return self.central_hex
+
+        # If all tiles are occupied, force the first one to be central
         self.central_hex = self.state_hexes[0]
         self.state_hexes[0].set_central_hex_status(True)
         return self.central_hex
