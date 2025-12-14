@@ -2,6 +2,7 @@ from contextlib import contextmanager
 from os import posix_fadvise
 import pygame
 
+from InfoTabs import DEFAULT_FONT
 import colors
 import Collisions_2d
 from utils import clamp
@@ -114,9 +115,25 @@ class TextureButton(Button):
         self.__old_color = colors.shader_color
         self.__color_index = -1
 
+        self.__data_color = colors.gray_light
+        self.__alt_color = colors.red
+        self.__is_alt = False
+
+        self.data_font = pygame.font.Font(DEFAULT_FONT, 20)
+        self.draw_text = False
+
     def change_color(self, new_color):
         utils.change_color(self.__texture, self.__old_color, new_color)
         self.__old_color = new_color
+
+    def set_is_alt(self, val):
+        self.__is_alt = val
+
+    def switch_alt(self):
+        self.__is_alt = not self.__is_alt
+
+    def is_alt(self):
+        return self.__is_alt
 
     def get_old_color(self):
         return self.__old_color
@@ -150,10 +167,29 @@ class TextureButton(Button):
 
         self.__texture = pygame.transform.scale(self.__texture, old_size)
 
+    def render_text(self, screen):
+        if not self.active:
+            return
+
+        color = self.__data_color
+        if self.__is_alt:
+            color = self.__alt_color
+
+        text = self.data_font.render(self.get_str_data(), True, color)
+        text_rect = text.get_rect()
+
+        size = self.__texture.get_size()
+        pos = self.get_pos()
+        text_rect.center = (pos[0] + size[0] // 2, pos[1] + size[1])
+
+        screen.blit(text, text_rect)
+
     def draw(self, screen):
         screen.blit(self.__texture, self.get_pos())
         if self.is_highlighted:
             pygame.draw.rect(screen, colors.yellow, self.__highlight, width=self.__highlight_width)
+        if self.get_str_data() != "" and self.draw_text:
+            self.render_text(screen)
 
     def toggle_highlight(self):
         self.is_highlighted = not self.is_highlighted

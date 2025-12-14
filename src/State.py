@@ -15,7 +15,7 @@ class State:
 
         # State economy
         self.income = 0
-        self.money = 10
+        self.money = 0
 
         # If money ever reaches negative, this will be set to True
         # If this is True, all the units of the state will be deleted
@@ -26,6 +26,9 @@ class State:
 
     def get_money(self):
         return self.money
+
+    def spend_money(self, val):
+        self.money -= val
 
     def get_owner(self):
         return self.owner

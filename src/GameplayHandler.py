@@ -26,6 +26,8 @@ from Tabs import TabMenu
 
 DEFAULT_FONT = 'freesansbold.ttf'
 
+FARM_BASE_COST = 12
+
 # The gameplay class that handler the gameplay aspects of the game
 class Gameplay:
     def __init__(self, renderer : GameRenderer.GameRenderer, hex_map : HexMap.HexMap, screen_size : tuple[int, int], color_scheme : list[tuple[int, int, int]]):
@@ -59,6 +61,8 @@ class Gameplay:
         self.buytab.spread_buttons_horizontally()
 
         self.__building_mode = False
+        self.__next_cost = 0
+        self.__to_place : Doodads.Doodad = None
 
         self.__coin_surface = pygame.image.load("../assets/ui/game/Coin.png")
 
@@ -66,6 +70,16 @@ class Gameplay:
         self.money_font = pygame.font.Font(DEFAULT_FONT, 20)
 
         self.buttons = ButtonHandler.load_gameplay_buttons(screen_size)
+
+        self.__start_updating_money = False
+
+    def check_costs(self, state):
+        money = state.get_money()
+        for button in self.buytab.get_buttons():
+            button.set_is_alt(False)
+
+            if int(button.get_str_data()) > money:
+                button.set_is_alt(True)
 
     def render_tabs(self, screen):
         if self.__tabs_visible:
@@ -76,10 +90,54 @@ class Gameplay:
             button.draw(screen)
 
     def buttons_click_action(self, mouse_pos : tuple[int, int]):
+        found_button = False
         for button in self.buttons:
             if button.check_mouse_collision(mouse_pos):
+                found_button = True
                 print("Clicked on a button")
                 button.call_function(self, button)
+
+        if self.__tabs_visible:
+            for button in self.buytab.get_buttons():
+                if button.check_mouse_collision(mouse_pos):
+                    found_button = True
+                    button.call_function(self, button)
+
+        return found_button
+
+    # Aqcuire the doodad to buy
+    def buy_doodad(self, button):
+        print("buy doodad")
+        cost = int(button.get_str_data())
+        if self.__selected_state and self.__building_mode:
+            owner = self.__selected_state.owner
+            to_buy = [Doodads.UnitTier1(owner), Doodads.UnitTier2(owner), Doodads.UnitTier3(owner), Doodads.UnitTier4(owner), Doodads.TowerTier1(owner), Doodads.TowerTier2(owner), Doodads.Farm(owner)]
+
+            money = self.__selected_state.get_money()
+
+            if cost <= money:
+                self.__next_cost = cost
+                self.__to_place = copy.deepcopy(to_buy[self.buytab.get_buttons().index(button)])
+
+            del to_buy
+
+    # Place down the bought doodad
+    def place_bought_doodad(self, tile):
+        if self.__to_place and tile and not tile.doodad and self.__building_mode and self.__selected_state:
+            self.__to_place.set_can_action(True)
+
+            action_list = ActionHandler.ActionList([])
+            action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, None, copy.deepcopy(self.__to_place), 'doodad', tile))
+
+            old_money = self.__selected_state.get_money()
+            action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.MONEY, old_money, utils.clamp(old_money - self.__next_cost, 0, 100000000), 'money', self.__selected_state))
+
+            self.action_handler.add_action_list(action_list)
+
+            self.__renderer.update_chunk(tile)
+
+        self.__to_place = None
+        self.__next_cost = 0
 
     # Load a game and save the game configuration
     def load_game(self, game_name):
@@ -136,11 +194,19 @@ class Gameplay:
         if not player:
             return
 
+        if self.__start_updating_money:
+            player.add_all_income()
+
         tiles = player.ready_all_units()
         self.__renderer.update_list_chunks(tiles)
 
     # End the current turn and go onto the next player
     def end_current_turn(self):
+        self.__renderer.set_highlighted_hexes()
+        self.__selected_tile = None
+        self.__selected_state = None
+        self.__tabs_visible = False
+
         player = self.get_current_player()
 
         if not player:
@@ -152,6 +218,7 @@ class Gameplay:
         self.__current_player += 1
         if (not self.get_current_player()):
             self.__current_player = 0
+            self.__start_updating_money = True
 
         self.__renderer.update_list_chunks(tiles)
         self.start_current_turn()
@@ -206,9 +273,13 @@ class Gameplay:
         if not click_once:
             return
 
-        if not tile:
-            self.buttons_click_action(mouse_pos)
+        # Buttons take priority
+        if self.buttons_click_action(mouse_pos):
             return
+
+        if not tile:
+            return
+
         player = self.get_current_player()
 
         # Handle the selected tile
@@ -228,7 +299,9 @@ class Gameplay:
                         self.__tabs_visible = not self.__tabs_visible
                         self.__renderer.set_highlighted_hexes(state.get_state_hexes())
                         self.__selected_state = state
+                        self.check_costs(state)
                 else:
+                    self.place_bought_doodad(tile)
                     self.__building_mode = False
                     self.__renderer.set_highlighted_hexes()
                     self.__tabs_visible = False
@@ -237,7 +310,7 @@ class Gameplay:
                 self.__building_mode = False
                 self.__renderer.set_highlighted_hexes()
                 self.__tabs_visible = False
-            self.buttons_click_action(mouse_pos)
+            self.place_bought_doodad(tile)
             return
 
         print("Handle gameplay mouse")
@@ -266,8 +339,6 @@ class Gameplay:
             player.update_all_income()
         self.__selected_tile = None
         self.__renderer.set_highlighted_hexes()
-
-        self.buttons_click_action(mouse_pos)
 
     # Handle the keyboard input
     def handle_keyboard_action(self, screen):
