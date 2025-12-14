@@ -21,6 +21,12 @@ class State:
         # If this is True, all the units of the state will be deleted
         self.is_bankrupt = False
 
+    def get_income(self):
+        return self.income
+
+    def get_money(self):
+        return self.money
+
     def get_owner(self):
         return self.owner
 
@@ -58,6 +64,7 @@ class State:
 
     # Update the income of the state
     def update_income(self):
+        self.income = 0
         for tile in self.state_hexes:
             self.income += tile.income
             if (tile.doodad):

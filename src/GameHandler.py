@@ -241,6 +241,9 @@ class GameHandler:
     def draw_gameplay_fog(self):
         self.__renderer.fill_screen_with_fog()
 
+    def draw_gameplay_ui(self):
+        self.__gameplay.render_coin(self.__screen)
+
     def draw_every_frame(self):
         if self.__renderer:
             self.draw_renderer_chunks()
@@ -255,6 +258,7 @@ class GameHandler:
         if self.__gameplay:
             self.draw_gameplay_fog()
             self.draw_gameplay_tabs()
+            self.draw_gameplay_ui()
 
     def set_new_map_editor(self):
         if self.__is_editor_set_up():

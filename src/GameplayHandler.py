@@ -6,6 +6,7 @@ import Hex
 import HexMap
 import Player
 import Doodads
+import State
 
 import button
 import utils
@@ -20,6 +21,8 @@ import ButtonHandler
 
 from Tabs import Tab
 from Tabs import TabMenu
+
+DEFAULT_FONT = 'freesansbold.ttf'
 
 # The gameplay class that handler the gameplay aspects of the game
 class Gameplay:
@@ -43,6 +46,7 @@ class Gameplay:
         self.action_handler = ActionHandler.History()
 
         self.__selected_tile : Hex.Hex = None
+        self.__selected_state : State.State = None
 
         self.__tabs_visible = False
 
@@ -51,6 +55,10 @@ class Gameplay:
         self.buytab.spread_buttons_horizontally()
 
         self.__building_mode = False
+
+        self.__coin_surface = pygame.image.load("../assets/ui/game/Coin.png")
+
+        self.font = pygame.font.Font(DEFAULT_FONT, 20)
 
     def render_tabs(self, screen):
         if self.__tabs_visible:
@@ -75,6 +83,10 @@ class Gameplay:
             self.action_handler.deep_clear()
 
             pygame.event.post(pygame.event.Event(Events.MAP_CHANGED))
+
+            for player in self.__players:
+                if player:
+                    player.update_all_income()
 
             for row in self.__hex_map.hexmap:
                 for tile in row:
@@ -125,6 +137,44 @@ class Gameplay:
 
         self.start_current_turn()
 
+    def render_text(self, screen, line, pos):
+        text = self.font.render(line, True, colors.white)
+        text_rect = text.get_rect()
+
+        text_rect.x = pos[0]
+        text_rect.y = pos[1]
+
+        screen.blit(text, text_rect)
+
+    def render_coin(self, screen):
+        if not self.__tabs_visible:
+            return
+
+        player = self.get_current_player()
+        if not player:
+            return
+
+        screen_size = screen.get_size()
+
+        buy_button = self.buytab.get_buttons()[0]
+        button_y = buy_button.get_pos()[1] + 16
+
+        screen.blit(self.__coin_surface, (screen_size[0] // 12, button_y))
+
+        if self.__selected_state:
+            state = self.__selected_state
+
+            player.update_all_income()
+
+            plus = ""
+            if state.get_income() > 0:
+                plus = "+"
+
+            text = str(state.get_money()) + "  (" + plus + str(state.get_income()) + ")"
+            # print(f"text = {text}")
+
+            self.render_text(screen, text, (screen_size[0] // 12 + 48, button_y + 8))
+
     # Handle the mouse input
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
         # Select the tile
@@ -133,6 +183,7 @@ class Gameplay:
 
         if not tile:
             return
+        player = self.get_current_player()
 
         # Handle the selected tile
         if not self.__selected_tile:
@@ -147,13 +198,14 @@ class Gameplay:
                 elif not self.__building_mode:
                     self.__building_mode = True
                     self.__tabs_visible = not self.__tabs_visible
-                    player = self.get_current_player()
                     state = player.state_includes_tile(tile)
                     self.__renderer.set_highlighted_hexes(state.get_state_hexes())
+                    self.__selected_state = state
                 else:
                     self.__building_mode = False
                     self.__renderer.set_highlighted_hexes()
                     self.__tabs_visible = False
+                    self.__selected_state = None
             else:
                 self.__building_mode = False
                 self.__renderer.set_highlighted_hexes()
@@ -183,6 +235,7 @@ class Gameplay:
                 tile_list.extend(modified_tiles)
 
             self.__renderer.update_list_chunks(tile_list)
+            player.update_all_income()
         self.__selected_tile = None
         self.__renderer.set_highlighted_hexes()
 
@@ -209,6 +262,8 @@ class Gameplay:
             actions = self.action_handler.redo_last_action()
         self.__renderer.set_highlighted_hexes()
         self.__selected_tile = None
+        self.__selected_state = None
+        self.__tabs_visible = False
 
         if actions:
             utils.state_handling(self, actions, None)
