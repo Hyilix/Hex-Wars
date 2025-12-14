@@ -42,6 +42,14 @@ class State:
     def get_state_hexes(self):
         return self.state_hexes
 
+    def get_farm_count(self):
+        count = 0
+        for tile in self.state_hexes:
+            if isinstance(tile.doodad, Doodads.Farm):
+                count += 1
+
+        return count
+
     def set_central_hex(self, central_hex : Hex):
         if central_hex in self.state_hexes:
             self.central_hex.set_central_hex_status(False)

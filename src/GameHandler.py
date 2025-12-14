@@ -245,6 +245,7 @@ class GameHandler:
         self.__gameplay.render_coin(self.__screen)
         self.__gameplay.draw_current_player_text(self.__screen)
         self.__gameplay.render_buttons(self.__screen)
+        self.__gameplay.draw_winner_player_text(self.__screen)
 
     def draw_every_frame(self):
         if self.__renderer:

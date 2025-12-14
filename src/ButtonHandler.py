@@ -53,7 +53,7 @@ def switch_to_editor(game_handler, button):
     game_handler.switch_tab(GameHandler.CurrentTab.EDITOR)
 
 def switch_to_lobby(game_handler, button):
-    game_handler.switch_tab(GameHandler.CurrentTab.LOBBY)
+    GameHandler.GameHandler().switch_tab(GameHandler.CurrentTab.LOBBY)
 
 def quit_game(game_handler, button):
     game_handler.stop_game()
@@ -512,6 +512,14 @@ def load_gameplay_buttons(screen_size):
     next_turn = button.TextureButton((pos_x + 140, pos_y), (64, 64), select_gameplay_next_turn)
     next_turn.load_texture("../assets/ui/game/Next_Turn.png")
     buttons.append(next_turn)
+
+    return buttons
+
+def load_end_buttons(screen_size):
+    buttons : list[button.SimpleButton] = []
+
+    lobby = button.SimpleButton((screen_size[0] // 2 - 256, screen_size[1] // 2 - 64), (512, 128), "Back to Lobby", switch_to_lobby)
+    buttons.append(lobby)
 
     return buttons
 

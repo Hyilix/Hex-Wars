@@ -73,6 +73,9 @@ class Gameplay:
 
         self.__start_updating_money = False
 
+        self.__game_ended = False
+        self.__found_player_index = -1
+
     def check_costs(self, state):
         money = state.get_money()
         for button in self.buytab.get_buttons():
@@ -124,7 +127,8 @@ class Gameplay:
     # Place down the bought doodad
     def place_bought_doodad(self, tile):
         if self.__to_place and tile and not tile.doodad and self.__building_mode and self.__selected_state:
-            self.__to_place.set_can_action(True)
+            if isinstance(self.__to_place, Doodads.Unit):
+                self.__to_place.set_can_action(True)
 
             action_list = ActionHandler.ActionList([])
             action_list.add_action(ActionHandler.Action(ActionHandler.ActionType.TILE, None, copy.deepcopy(self.__to_place), 'doodad', tile))
@@ -184,6 +188,16 @@ class Gameplay:
     def get_current_player(self):
         return self.__players[self.__current_player]
 
+    def sanity_check(self):
+        found_players = 0
+        for player in self.__players:
+            if player:
+                found_players += 1
+                self.__found_player_index = self.__players.index(player)
+
+        if found_players <= 1:
+            self.__game_ended = True
+
     # Start the current turn
     def start_current_turn(self):
         # Clear before anything
@@ -207,6 +221,8 @@ class Gameplay:
         self.__selected_state = None
         self.__tabs_visible = False
 
+        self.sanity_check()
+
         player = self.get_current_player()
 
         if not player:
@@ -221,7 +237,8 @@ class Gameplay:
             self.__start_updating_money = True
 
         self.__renderer.update_list_chunks(tiles)
-        self.start_current_turn()
+        if not self.__game_ended:
+            self.start_current_turn()
 
     def render_text(self, screen, line, pos, color, font):
         text = font.render(line, True, color)
@@ -234,9 +251,16 @@ class Gameplay:
         return text_rect
 
     def draw_current_player_text(self, screen):
-        screen_size = screen.get_size()
-        prev_rect = self.render_text(screen, "Current Player: ", (screen_size[0] // 20, screen_size[1] // 20), colors.white, self.font)
-        self.render_text(screen, str(self.__current_player), (screen_size[0] // 20 + prev_rect.width, screen_size[1] // 20), self.__color_scheme[self.__current_player + 1], self.font)
+        if not self.__game_ended:
+            screen_size = screen.get_size()
+            prev_rect = self.render_text(screen, "Current Player: ", (screen_size[0] // 20, screen_size[1] // 20), colors.white, self.font)
+            self.render_text(screen, str(self.__current_player), (screen_size[0] // 20 + prev_rect.width, screen_size[1] // 20), self.__color_scheme[self.__current_player + 1], self.font)
+
+    def draw_winner_player_text(self, screen):
+        if self.__game_ended:
+            screen_size = screen.get_size()
+            prev_rect = self.render_text(screen, "Game Won by Player: ", (screen_size[0] // 2 - 160, screen_size[1] // 2 - 100), colors.white, self.font)
+            self.render_text(screen, str(self.__found_player_index), (screen_size[0] // 2 - 160 + prev_rect.width, screen_size[1] // 2 - 100), self.__color_scheme[self.__found_player_index + 1], self.font)
 
     def render_coin(self, screen):
         if not self.__tabs_visible:
@@ -269,12 +293,21 @@ class Gameplay:
 
     # Handle the mouse input
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
+        # Game ended. Wait until we go back to the lobby
+        if self.__game_ended:
+            self.buttons = ButtonHandler.load_end_buttons(self.__screen_size)
+            self.buttons_click_action(mouse_pos)
+            return
+
         # Select the tile
         if not click_once:
             return
 
         # Buttons take priority
         if self.buttons_click_action(mouse_pos):
+            if self.__game_ended:
+                self.buttons = ButtonHandler.load_end_buttons(self.__screen_size)
+                self.buttons_click_action(mouse_pos)
             return
 
         if not tile:
@@ -356,6 +389,9 @@ class Gameplay:
 
     # Handle the action handler
     def handle_action_handler(self, to_undo : bool):
+        if self.__game_ended:
+            return
+
         actions = []
         if to_undo:
             actions = self.action_handler.undo_last_action()
