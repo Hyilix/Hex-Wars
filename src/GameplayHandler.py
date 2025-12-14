@@ -96,6 +96,32 @@ class Gameplay:
     def get_current_player(self):
         return self.__players[self.__current_player]
 
+    # Start the current turn
+    def start_current_turn(self):
+        player = self.get_current_player()
+
+        if not player:
+            return
+
+        player.print_no_states()
+        player.ready_all_units()
+
+    # End the current turn and go onto the next player
+    def end_current_turn(self):
+        player = self.get_current_player()
+
+        if not player:
+            return
+
+        player.unready_all_units()
+
+        # Prepare next player
+        self.__current_player += 1
+        if (not self.get_current_player()):
+            self.__current_player = 0
+
+        self.start_current_turn()
+
     # Handle the mouse input
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):
         # Select the tile
@@ -105,9 +131,10 @@ class Gameplay:
         if not tile:
             return
 
+        # Handle the selected tile
         if not self.__selected_tile:
             if self.is_of_current_player(tile):
-                if isinstance(tile.doodad, Doodads.Unit):
+                if isinstance(tile.doodad, Doodads.Unit) and tile.doodad.get_can_action():
                     self.__tabs_visible = False
                     self.__selected_tile = tile
 

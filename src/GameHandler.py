@@ -128,6 +128,7 @@ class GameHandler:
     def create_default_gameplay(self):
         self.__gameplay = GameplayHandler.Gameplay(self.__renderer, self.__hex_map, self.__screen.get_size())
         self.__gameplay.load_game(self.__map_to_load)
+        self.__gameplay.start_current_turn()
 
     def picker_load_maps(self):
         self.__menu.load_maps(self.__color_scheme)

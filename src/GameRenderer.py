@@ -465,6 +465,8 @@ class GameRenderer:
                     self.load_doodad_surface(doodad.get_name(), doodad.get_type(), self.cached_zoom)
                     temp_doodad_surface = self.find_doodad_by_name(doodad.get_name())
 
+                temp_doodad_surface = temp_doodad_surface.copy()
+
                 # Blit the ready sign if it can move
                 if doodad.get_can_action():
                     temp_doodad_surface.blit(self.ready_surface, (0, 0))

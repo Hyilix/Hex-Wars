@@ -58,3 +58,11 @@ class Player:
         for state in self.states:
             state.ready_all_units()
 
+    def unready_all_units(self):
+        for state in self.states:
+            state.ready_all_units()
+
+    def update_all_income(self):
+        for state in self.states:
+            state.update_income()
+

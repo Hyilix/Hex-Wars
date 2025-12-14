@@ -15,7 +15,7 @@ class State:
 
         # State economy
         self.income = 0
-        self.money = 0
+        self.money = 10
 
         # If money ever reaches negative, this will be set to True
         # If this is True, all the units of the state will be deleted
@@ -147,6 +147,12 @@ class State:
         for tile in self.get_state_hexes():
             if isinstance(tile.doodad, Doodads.Unit):
                 tile.doodad.set_can_action(True)
+                print(f"Tile found to set action -> {tile.get_position()}")
+
+    def unready_all_units(self):
+        for tile in self.get_state_hexes():
+            if isinstance(tile.doodad, Doodads.Unit):
+                tile.doodad.set_can_action(False)
 
     def split_state(self, hexmap : HexMap, states):
         former_state = self.state_hexes[:]
