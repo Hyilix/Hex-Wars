@@ -521,7 +521,8 @@ class GameRenderer:
             transparent = pygame.Surface(self.screen.get_size(), pygame.SRCALPHA)
             transparent.fill(self.__fog_color)
             for tile in self.highlighted_tiles:
-                self.update_chunk(tile, transparent)
+                if tile.owner >= 0:
+                    self.update_chunk(tile, transparent)
 
             self.screen.blit(transparent, (0, 0))
 

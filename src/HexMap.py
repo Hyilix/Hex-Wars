@@ -184,6 +184,10 @@ class HexMap:
         if start_hex == end_hex:
             return False
 
+        # No moving to empty spaces
+        if end_hex.owner == -1:
+            return False
+
         print(f"start_hex -> {start_hex.get_position()}, end_hex -> {end_hex.get_position()}")
 
         # If there is no doodad, there is nothing to move
