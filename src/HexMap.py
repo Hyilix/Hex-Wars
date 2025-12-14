@@ -76,6 +76,7 @@ class HexMap:
         neighbors = []
         for index in range(6):
             neighbors.append(self.get_hex_neighbor(tile, index))
+
         return neighbors
 
     def get_hex_all_owner_neighbors(self, tile : Hex):
@@ -115,39 +116,44 @@ class HexMap:
     def get_movable_tiles(self, start, max_level):
         visited = [start]
         queue = deque([(start, 0)])
+        print(f"The start tile: {start.get_position()}")
 
         while queue:
             tile, level = queue.popleft()
             if (level < max_level or max_level == -1) and tile.owner == start.owner:
                 for neighbour in self.get_hex_all_neighbors(tile):
                     if neighbour and neighbour not in visited:
+                        print(f"neighbor position to be added -> {neighbour.get_position()}")
                         visited.append(neighbour)
                         queue.append((neighbour, level + 1))
 
-        # Remove the doodads from the same ownership
+        # Filter out unwanted tiles by creating a new list
+        filtered = []
         for tile in visited:
             print(f"Handling the tile with pos {tile.get_position()}")
+
+            # Skip the start tile
             if tile == start:
-                visited.remove(tile)
                 print(f"Same tile of position {tile.get_position()}")
                 continue
 
-            # Remove the doodads from the same territory
+            # Remove doodads from the same territory
             if tile.owner == start.owner:
                 if tile.doodad:
                     print(f"Removed tile of position {tile.get_position()}")
-                    visited.remove(tile)
-            # Remove the doodads with a defence higher than the attack
+                    continue  # Skip adding to filtered
+            # Remove doodads with defence >= attack
             else:
-                # 'start' tile should always have a unit
                 attack = start.doodad.get_attack()
                 defence = self.check_tile_defence(tile)
-
                 print(f"defence : {defence} vs attack : {attack} on tile at pos : {tile.get_position()}")
                 if defence >= attack:
-                    visited.remove(tile)
+                    continue  # Skip adding to filtered
 
-        return visited
+            # If we got here, keep the tile
+            filtered.append(tile)
+
+        return filtered
 
     def get_identical_neighboring_hexes(self, tile : Hex):
         return self.__bfs_up_to_level(tile, -1, True)
