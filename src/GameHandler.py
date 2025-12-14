@@ -126,7 +126,7 @@ class GameHandler:
         self.__menu = Menu.MapPicker(self.__screen)
 
     def create_default_gameplay(self):
-        self.__gameplay = GameplayHandler.Gameplay(self.__renderer, self.__hex_map, self.__screen.get_size())
+        self.__gameplay = GameplayHandler.Gameplay(self.__renderer, self.__hex_map, self.__screen.get_size(), self.__color_scheme)
         self.__gameplay.load_game(self.__map_to_load)
         self.__gameplay.start_current_turn()
 
@@ -243,6 +243,7 @@ class GameHandler:
 
     def draw_gameplay_ui(self):
         self.__gameplay.render_coin(self.__screen)
+        self.__gameplay.draw_current_player_text(self.__screen)
 
     def draw_every_frame(self):
         if self.__renderer:

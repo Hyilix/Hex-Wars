@@ -26,7 +26,7 @@ DEFAULT_FONT = 'freesansbold.ttf'
 
 # The gameplay class that handler the gameplay aspects of the game
 class Gameplay:
-    def __init__(self, renderer : GameRenderer.GameRenderer, hex_map : HexMap.HexMap, screen_size : tuple[int, int]):
+    def __init__(self, renderer : GameRenderer.GameRenderer, hex_map : HexMap.HexMap, screen_size : tuple[int, int], color_scheme : list[tuple[int, int, int]]):
         self.__renderer = renderer
         self.__hex_map = hex_map
 
@@ -34,6 +34,8 @@ class Gameplay:
 
         self.__players = [None, None, None, None, None, None]
         self.__current_player = 0
+
+        self.__color_scheme = color_scheme
 
         self.__config = {
                 "Hash": 0,
@@ -58,7 +60,7 @@ class Gameplay:
 
         self.__coin_surface = pygame.image.load("../assets/ui/game/Coin.png")
 
-        self.font = pygame.font.Font(DEFAULT_FONT, 20)
+        self.font = pygame.font.Font(DEFAULT_FONT, 30)
 
     def render_tabs(self, screen):
         if self.__tabs_visible:
@@ -87,6 +89,7 @@ class Gameplay:
             for player in self.__players:
                 if player:
                     player.update_all_income()
+                    player.set_money_to_all_states(10)
 
             for row in self.__hex_map.hexmap:
                 for tile in row:
@@ -137,14 +140,20 @@ class Gameplay:
 
         self.start_current_turn()
 
-    def render_text(self, screen, line, pos):
-        text = self.font.render(line, True, colors.white)
+    def render_text(self, screen, line, pos, color):
+        text = self.font.render(line, True, color)
         text_rect = text.get_rect()
 
         text_rect.x = pos[0]
         text_rect.y = pos[1]
 
         screen.blit(text, text_rect)
+        return text_rect
+
+    def draw_current_player_text(self, screen):
+        screen_size = screen.get_size()
+        prev_rect = self.render_text(screen, "Current Player: ", (screen_size[0] // 20, screen_size[1] // 20), colors.white)
+        self.render_text(screen, str(self.__current_player), (screen_size[0] // 20 + prev_rect.width, screen_size[1] // 20), self.__color_scheme[self.__current_player + 1])
 
     def render_coin(self, screen):
         if not self.__tabs_visible:
@@ -173,7 +182,7 @@ class Gameplay:
             text = str(state.get_money()) + "  (" + plus + str(state.get_income()) + ")"
             # print(f"text = {text}")
 
-            self.render_text(screen, text, (screen_size[0] // 12 + 48, button_y + 8))
+            self.render_text(screen, text, (screen_size[0] // 12 + 48, button_y + 8), colors.white)
 
     # Handle the mouse input
     def handle_mouse_action(self, mouse_pos : tuple[int, int], tile, click_once = False):

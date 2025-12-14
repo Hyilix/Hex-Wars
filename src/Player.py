@@ -66,3 +66,7 @@ class Player:
         for state in self.states:
             state.update_income()
 
+    def set_money_to_all_states(self, money):
+        for state in self.states:
+            state.money = money
+
